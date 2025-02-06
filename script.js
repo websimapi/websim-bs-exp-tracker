@@ -17,6 +17,42 @@
   let startY = 0;
   let cropAnimationFrameID = null;
 
+  // OCR related variables
+  let ocrWorker = null;
+  let ocrInProgress = false;
+  let lastOCRTimestamp = 0;
+  const ocrDelay = 2000; // 2 seconds delay between OCR processes
+
+  // Initialize OCR Worker using Tesseract.js (assumes Tesseract is loaded globally)
+  async function initOCRWorker() {
+    if (!ocrWorker) {
+      ocrWorker = window.Tesseract.createWorker({
+        logger: m => console.log(m)
+      });
+      await ocrWorker.load();
+      await ocrWorker.loadLanguage('eng');
+      await ocrWorker.initialize('eng');
+    }
+  }
+
+  // Perform OCR on the cropped canvas and update the OCR result container
+  async function performOCR() {
+    if (!cropRegion || !videoElement.srcObject) return;
+    if (!ocrWorker) await initOCRWorker();
+    ocrInProgress = true;
+    try {
+      const { data: { text } } = await ocrWorker.recognize(croppedCanvas);
+      const ocrOutput = document.getElementById('ocr-output');
+      if (ocrOutput) {
+        ocrOutput.textContent = text;
+      }
+    } catch (error) {
+      console.error("OCR error: ", error);
+    }
+    lastOCRTimestamp = Date.now();
+    ocrInProgress = false;
+  }
+
   // Start screen capture
   async function startCapture() {
     try {
@@ -197,7 +233,11 @@
       { r: 0x62, g: 0x63, b: 0x45 }, // #626345
       { r: 0x92, g: 0x8e, b: 0x26 }, // #928e26
       { r: 0x6e, g: 0x6e, b: 0x52 }, // #6e6e52
-      { r: 0x21, g: 0x23, b: 0x21 }  // #212321
+      { r: 0x21, g: 0x23, b: 0x21 }, // #212321
+      { r: 0x5a, g: 0x5b, b: 0x4e }, // #5a5b4e
+      { r: 0x44, g: 0x58, b: 0x41 }, // #445841
+      { r: 0x4b, g: 0x59, b: 0x49 }, // #4b5949
+      { r: 0x5e, g: 0x5e, b: 0x5e }  // #5e5e5e
     ];
 
     for (let i = 0; i < data.length; i += 4) {
@@ -220,6 +260,11 @@
       }
     }
     croppedCtx.putImageData(imageData, 0, 0);
+
+    // Trigger OCR if enough time has passed and if not already in progress
+    if (Date.now() - lastOCRTimestamp > ocrDelay && !ocrInProgress) {
+      performOCR();
+    }
 
     cropAnimationFrameID = requestAnimationFrame(updateCroppedFeed);
   }

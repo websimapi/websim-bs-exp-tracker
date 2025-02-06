@@ -119,3 +119,20 @@ main {
 #color-hex-value {
   font-family: monospace;
 }
+
+/* OCR Result styling */
+#ocr-result {
+  margin-top: 20px;
+  padding: 15px;
+  border: 2px solid #007BFF;
+  border-radius: 4px;
+  background: #fff;
+  text-align: center;
+}
+
+#ocr-output {
+  margin-top: 10px;
+  font-family: monospace;
+  min-height: 50px;
+  color: #333;
+}
