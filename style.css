@@ -92,3 +92,30 @@ main {
   border-radius: 4px;
   max-width: 100%;
 }
+
+/* Color Picker styling */
+#color-picker {
+  margin-top: 20px;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.2rem;
+}
+
+#color-picker label {
+  font-weight: bold;
+}
+
+#picked-color-swatch {
+  width: 40px;
+  height: 40px;
+  border: 2px solid #333;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+#color-hex-value {
+  font-family: monospace;
+}

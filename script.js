@@ -163,23 +163,6 @@
       cropRegion.w,
       cropRegion.h
     );
-
-    // Process the drawn image to remove color data and isolate text.
-    // Convert the image to grayscale then apply thresholding to create a binary (black & white) image.
-    const imageData = croppedCtx.getImageData(0, 0, croppedCanvas.width, croppedCanvas.height);
-    const data = imageData.data;
-    for (let i = 0; i < data.length; i += 4) {
-      const r = data[i];
-      const g = data[i + 1];
-      const b = data[i + 2];
-      // Convert to grayscale using luminance formula.
-      const gray = 0.299 * r + 0.587 * g + 0.114 * b;
-      // Apply thresholding (adjust the threshold value to suit your needs)
-      const threshold = 150;
-      const binary = gray < threshold ? 0 : 255;
-      data[i] = data[i + 1] = data[i + 2] = binary;
-    }
-    croppedCtx.putImageData(imageData, 0, 0);
     cropAnimationFrameID = requestAnimationFrame(updateCroppedFeed);
   }
 
@@ -194,4 +177,29 @@
     }
     displayContainer.addEventListener('mousedown', startCrop);
   });
+
+  // Color Picker Tool for Cropped Canvas
+  croppedCanvas.addEventListener('click', (e) => {
+    // Ensure the canvas has valid dimensions
+    if (!croppedCanvas.width || !croppedCanvas.height) return;
+    const rect = croppedCanvas.getBoundingClientRect();
+    const x = Math.floor(e.clientX - rect.left);
+    const y = Math.floor(e.clientY - rect.top);
+    // Boundary check
+    if (x < 0 || y < 0 || x > croppedCanvas.width || y > croppedCanvas.height) return;
+    const pixelData = croppedCtx.getImageData(x, y, 1, 1).data;
+    const hexColor = rgbToHex(pixelData[0], pixelData[1], pixelData[2]);
+    document.getElementById('picked-color-swatch').style.backgroundColor = hexColor;
+    document.getElementById('color-hex-value').textContent = hexColor;
+  });
+
+  // Helper functions to convert RGB values to Hex
+  function componentToHex(c) {
+    const hex = c.toString(16);
+    return hex.length === 1 ? '0' + hex : hex;
+  }
+  
+  function rgbToHex(r, g, b) {
+    return '#' + componentToHex(r) + componentToHex(g) + componentToHex(b);
+  }
 })();
