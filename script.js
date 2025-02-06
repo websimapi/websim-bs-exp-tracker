@@ -152,6 +152,9 @@
     const videoCropHeight = cropRegion.h * scaleY;
     croppedCanvas.width = cropRegion.w;
     croppedCanvas.height = cropRegion.h;
+    // Set the CSS display size to 250% of the internal resolution for easier viewing
+    croppedCanvas.style.width = (cropRegion.w * 2.5) + 'px';
+    croppedCanvas.style.height = (cropRegion.h * 2.5) + 'px';
     croppedCtx.drawImage(
       videoElement,
       videoCropX,
@@ -216,8 +219,10 @@
     // Ensure the canvas has valid dimensions
     if (!croppedCanvas.width || !croppedCanvas.height) return;
     const rect = croppedCanvas.getBoundingClientRect();
-    const x = Math.floor(e.clientX - rect.left);
-    const y = Math.floor(e.clientY - rect.top);
+    // Calculate scale factor between internal resolution and displayed size
+    const scaleFactor = croppedCanvas.width / rect.width;
+    const x = Math.floor((e.clientX - rect.left) * scaleFactor);
+    const y = Math.floor((e.clientY - rect.top) * scaleFactor);
     // Boundary check
     if (x < 0 || y < 0 || x > croppedCanvas.width || y > croppedCanvas.height) return;
     const pixelData = croppedCtx.getImageData(x, y, 1, 1).data;
