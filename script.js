@@ -163,6 +163,23 @@
       cropRegion.w,
       cropRegion.h
     );
+
+    // Process the drawn image to remove color data and isolate text.
+    // Convert the image to grayscale then apply thresholding to create a binary (black & white) image.
+    const imageData = croppedCtx.getImageData(0, 0, croppedCanvas.width, croppedCanvas.height);
+    const data = imageData.data;
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i];
+      const g = data[i + 1];
+      const b = data[i + 2];
+      // Convert to grayscale using luminance formula.
+      const gray = 0.299 * r + 0.587 * g + 0.114 * b;
+      // Apply thresholding (adjust the threshold value to suit your needs)
+      const threshold = 150;
+      const binary = gray < threshold ? 0 : 255;
+      data[i] = data[i + 1] = data[i + 2] = binary;
+    }
+    croppedCtx.putImageData(imageData, 0, 0);
     cropAnimationFrameID = requestAnimationFrame(updateCroppedFeed);
   }
 
