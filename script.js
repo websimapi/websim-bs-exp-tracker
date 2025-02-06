@@ -16,45 +16,11 @@
   let startX = 0;
   let startY = 0;
   let cropAnimationFrameID = null;
-
-  // OCR related variables
-  let ocrWorker = null;
-  let ocrInProgress = false;
-  let lastOCRTimestamp = 0;
-  const ocrDelay = 2000; // 2 seconds delay between OCR processes
-
-  // Initialize OCR Worker using Tesseract.js with appropriate configuration paths
-  async function initOCRWorker() {
-    if (!ocrWorker) {
-      ocrWorker = window.Tesseract.createWorker({
-        logger: m => console.log(m),
-        workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@2.1.5/dist/worker.min.js',
-        langPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@2.1.5/lang',
-        corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@2.1.0/tesseract-core.wasm.js'
-      });
-      await ocrWorker.load();
-      await ocrWorker.loadLanguage('eng');
-      await ocrWorker.initialize('eng');
-    }
-  }
-
-  // Perform OCR on the cropped canvas and update the OCR result container
-  async function performOCR() {
-    if (!cropRegion || !videoElement.srcObject) return;
-    if (!ocrWorker) await initOCRWorker();
-    ocrInProgress = true;
-    try {
-      const { data: { text } } = await ocrWorker.recognize(croppedCanvas);
-      const ocrOutput = document.getElementById('ocr-output');
-      if (ocrOutput) {
-        ocrOutput.textContent = text;
-      }
-    } catch (error) {
-      console.error("OCR error: ", error);
-    }
-    lastOCRTimestamp = Date.now();
-    ocrInProgress = false;
-  }
+  
+  // Variables for OCR throttling
+  let lastOCRTime = 0;
+  const ocrCooldown = 2000; // milliseconds
+  let isOCRProcessing = false;
 
   // Start screen capture
   async function startCapture() {
@@ -175,7 +141,7 @@
     displayContainer.style.cursor = 'default';
   }
 
-  // Continuously update the cropped feed canvas, swapping target color pixels to bright pink
+  // Continuously update the cropped feed canvas, swapping target color pixels to bright pink (#FF00FF)
   function updateCroppedFeed() {
     if (!cropRegion || !videoElement.srcObject) {
       croppedCtx.clearRect(0, 0, croppedCanvas.width, croppedCanvas.height);
@@ -210,6 +176,7 @@
     const imageData = croppedCtx.getImageData(0, 0, cropRegion.w, cropRegion.h);
     const data = imageData.data;
     const tolerance = 2; // Allow a variation of +/-2 per RGB component
+    // List of colors to remove (swap to bright pink)
     const targetColors = [
       { r: 0x29, g: 0x2c, b: 0x29 }, // #292c29
       { r: 0x29, g: 0x2a, b: 0x29 }, // #292a29
@@ -237,6 +204,7 @@
       { r: 0x92, g: 0x8e, b: 0x26 }, // #928e26
       { r: 0x6e, g: 0x6e, b: 0x52 }, // #6e6e52
       { r: 0x21, g: 0x23, b: 0x21 }, // #212321
+      // New colors to remove
       { r: 0x5a, g: 0x5b, b: 0x4e }, // #5a5b4e
       { r: 0x44, g: 0x58, b: 0x41 }, // #445841
       { r: 0x4b, g: 0x59, b: 0x49 }, // #4b5949
@@ -264,9 +232,10 @@
     }
     croppedCtx.putImageData(imageData, 0, 0);
 
-    // Trigger OCR if enough time has passed and if not already in progress
-    if (Date.now() - lastOCRTimestamp > ocrDelay && !ocrInProgress) {
+    // Perform OCR on the cropped feed every ocrCooldown interval
+    if (croppedCanvas.width > 0 && (Date.now() - lastOCRTime > ocrCooldown) && !isOCRProcessing) {
       performOCR();
+      lastOCRTime = Date.now();
     }
 
     cropAnimationFrameID = requestAnimationFrame(updateCroppedFeed);
@@ -300,6 +269,28 @@
     document.getElementById('picked-color-swatch').style.backgroundColor = hexColor;
     document.getElementById('color-hex-value').textContent = hexColor;
   });
+
+  // Auto OCR function using Tesseract.js on cropped feed
+  function performOCR() {
+    isOCRProcessing = true;
+    const ocrTextEl = document.getElementById('ocr-text');
+    ocrTextEl.textContent = "Processing OCR...";
+    // Recognize text from the cropped canvas
+    Tesseract.recognize(croppedCanvas, 'eng', {
+      logger: m => console.log(m)
+    })
+      .then(result => {
+        const text = result.data.text.trim();
+        ocrTextEl.textContent = text || "No text recognized.";
+      })
+      .catch(err => {
+        console.error("OCR error:", err);
+        ocrTextEl.textContent = "OCR Error: " + err;
+      })
+      .finally(() => {
+        isOCRProcessing = false;
+      });
+  }
 
   // Helper functions to convert RGB values to Hex
   function componentToHex(c) {
