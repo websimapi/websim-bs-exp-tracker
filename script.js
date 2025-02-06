@@ -23,11 +23,14 @@
   let lastOCRTimestamp = 0;
   const ocrDelay = 2000; // 2 seconds delay between OCR processes
 
-  // Initialize OCR Worker using Tesseract.js (assumes Tesseract is loaded globally)
+  // Initialize OCR Worker using Tesseract.js with appropriate configuration paths
   async function initOCRWorker() {
     if (!ocrWorker) {
       ocrWorker = window.Tesseract.createWorker({
-        logger: m => console.log(m)
+        logger: m => console.log(m),
+        workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@2.1.5/dist/worker.min.js',
+        langPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@2.1.5/lang',
+        corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@2.1.0/tesseract-core.wasm.js'
       });
       await ocrWorker.load();
       await ocrWorker.loadLanguage('eng');
