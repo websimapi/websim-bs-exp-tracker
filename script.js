@@ -136,7 +136,7 @@
     displayContainer.style.cursor = 'default';
   }
 
-  // Continuously update the cropped feed canvas, and remove specific colors
+  // Continuously update the cropped feed canvas, swapping target color pixels to bright pink
   function updateCroppedFeed() {
     if (!cropRegion || !videoElement.srcObject) {
       croppedCtx.clearRect(0, 0, croppedCanvas.width, croppedCanvas.height);
@@ -164,7 +164,7 @@
       cropRegion.h
     );
 
-    // Remove target pixels by making them transparent
+    // Swap target pixels to bright pink (#FF00FF)
     const imageData = croppedCtx.getImageData(0, 0, cropRegion.w, cropRegion.h);
     const data = imageData.data;
     const tolerance = 2; // Allow a variation of +/-2 per RGB component
@@ -185,8 +185,11 @@
           Math.abs(g - color.g) <= tolerance &&
           Math.abs(b - color.b) <= tolerance
         ) {
-          // Remove the pixel by setting it fully transparent
-          data[i + 3] = 0;
+          // Swap the pixel color to bright pink (#FF00FF)
+          data[i] = 255;    // Red
+          data[i + 1] = 0;  // Green
+          data[i + 2] = 255; // Blue
+          data[i + 3] = 255; // Fully opaque
           break;
         }
       }
