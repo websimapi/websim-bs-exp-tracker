@@ -12,7 +12,7 @@
 
   let stream = null;
   let captureAnimationFrame = null;
-  let cropRect = null; // { x, y, width, height }
+  let cropRect = null; // { x, y, width, height } relative to displayContainer
   let selectionInProgress = false;
   let startX = 0;
   let startY = 0;
@@ -54,11 +54,28 @@
   function updateCroppedCanvas() {
     if (!cropRect) return;
     const ctx = croppedCanvas.getContext('2d');
-    // Set canvas dimensions equal to cropRect
+
+    // Calculate scaling factor between video display size and actual recorded video size
+    const videoDisplayWidth = videoElement.offsetWidth;
+    const videoDisplayHeight = videoElement.offsetHeight;
+    const scaleX = videoElement.videoWidth / videoDisplayWidth;
+    const scaleY = videoElement.videoHeight / videoDisplayHeight;
+
+    // Set canvas dimensions equal to cropRect (in video coordinate space)
+    const videoCropX = cropRect.x * scaleX;
+    const videoCropY = cropRect.y * scaleY;
+    const videoCropWidth = cropRect.width * scaleX;
+    const videoCropHeight = cropRect.height * scaleY;
+    
     croppedCanvas.width = cropRect.width;
     croppedCanvas.height = cropRect.height;
-    // Draw the corresponding portion of the video onto the canvas
-    ctx.drawImage(videoElement, cropRect.x, cropRect.y, cropRect.width, cropRect.height, 0, 0, cropRect.width, cropRect.height);
+
+    // Draw the corresponding portion of the video onto the canvas, scaling down to canvas size
+    ctx.drawImage(
+      videoElement,
+      videoCropX, videoCropY, videoCropWidth, videoCropHeight,
+      0, 0, cropRect.width, cropRect.height
+    );
     // Continue updating if stream is live
     captureAnimationFrame = requestAnimationFrame(updateCroppedCanvas);
   }
