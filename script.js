@@ -163,6 +163,17 @@
       cropRegion.w,
       cropRegion.h
     );
+    
+    // Remove the color #292c29 (rgb(41,44,41)) from the cropped feed by making those pixels transparent
+    const imageData = croppedCtx.getImageData(0, 0, croppedCanvas.width, croppedCanvas.height);
+    const data = imageData.data;
+    for (let i = 0; i < data.length; i += 4) {
+      if (data[i] === 41 && data[i + 1] === 44 && data[i + 2] === 41) {
+        data[i + 3] = 0; // set alpha to 0 (transparent)
+      }
+    }
+    croppedCtx.putImageData(imageData, 0, 0);
+    
     cropAnimationFrameID = requestAnimationFrame(updateCroppedFeed);
   }
 
