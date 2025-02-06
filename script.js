@@ -136,7 +136,7 @@
     displayContainer.style.cursor = 'default';
   }
 
-  // Continuously update the cropped feed canvas
+  // Continuously update the cropped feed canvas, and remove specific colors
   function updateCroppedFeed() {
     if (!cropRegion || !videoElement.srcObject) {
       croppedCtx.clearRect(0, 0, croppedCanvas.width, croppedCanvas.height);
@@ -163,17 +163,36 @@
       cropRegion.w,
       cropRegion.h
     );
-    
-    // Remove the color #2a2a2a (rgb(42, 42, 42)) from the cropped feed by making those pixels transparent
-    const imageData = croppedCtx.getImageData(0, 0, croppedCanvas.width, croppedCanvas.height);
+
+    // Remove target pixels by making them transparent
+    const imageData = croppedCtx.getImageData(0, 0, cropRegion.w, cropRegion.h);
     const data = imageData.data;
+    const tolerance = 2; // Allow a variation of +/-2 per RGB component
+    const targetColors = [
+      { r: 0x29, g: 0x2c, b: 0x29 }, // #292c29
+      { r: 0x29, g: 0x2a, b: 0x29 }, // #292a29
+      { r: 0x2a, g: 0x2c, b: 0x29 }, // #2a2c29
+      { r: 0x29, g: 0x2e, b: 0x2a }  // #292e2a
+    ];
+
     for (let i = 0; i < data.length; i += 4) {
-      if (data[i] === 42 && data[i + 1] === 42 && data[i + 2] === 42) {
-        data[i + 3] = 0; // set alpha to 0 (transparent)
+      const r = data[i];
+      const g = data[i + 1];
+      const b = data[i + 2];
+      for (const color of targetColors) {
+        if (
+          Math.abs(r - color.r) <= tolerance &&
+          Math.abs(g - color.g) <= tolerance &&
+          Math.abs(b - color.b) <= tolerance
+        ) {
+          // Remove the pixel by setting it fully transparent
+          data[i + 3] = 0;
+          break;
+        }
       }
     }
     croppedCtx.putImageData(imageData, 0, 0);
-    
+
     cropAnimationFrameID = requestAnimationFrame(updateCroppedFeed);
   }
 
