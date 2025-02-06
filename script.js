@@ -12,10 +12,16 @@
 
   let stream = null;
   let captureAnimationFrame = null;
-  let cropRect = null; // { x, y, width, height } relative to displayContainer
+  let cropRect = null; // { x, y, width, height }
   let selectionInProgress = false;
   let startX = 0;
   let startY = 0;
+
+  // Variables to store video element's metrics captured at crop moment.
+  let videoOffsetX = 0;
+  let videoOffsetY = 0;
+  let videoScaleX = 1;
+  let videoScaleY = 1;
 
   // Check if getDisplayMedia is supported
   if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
@@ -50,37 +56,25 @@
     }
   }
 
-  // Function to update the cropped canvas with the current video frame cropped to cropRect
+  // Function to update the cropped canvas with the current video frame cropped to cropRect.
+  // IMPORTANT: Uses pre-captured metrics to compute the correct region from the video.
   function updateCroppedCanvas() {
     if (!cropRect) return;
     const ctx = croppedCanvas.getContext('2d');
-
-    // Calculate scaling factor between video display size and actual recorded video size
-    const videoDisplayWidth = videoElement.offsetWidth;
-    const videoDisplayHeight = videoElement.offsetHeight;
-    const scaleX = videoElement.videoWidth / videoDisplayWidth;
-    const scaleY = videoElement.videoHeight / videoDisplayHeight;
-
-    // Set canvas dimensions equal to cropRect (in video coordinate space)
-    const videoCropX = cropRect.x * scaleX;
-    const videoCropY = cropRect.y * scaleY;
-    const videoCropWidth = cropRect.width * scaleX;
-    const videoCropHeight = cropRect.height * scaleY;
-    
+    // Set canvas dimensions equal to the selection in container coordinates.
     croppedCanvas.width = cropRect.width;
     croppedCanvas.height = cropRect.height;
+    // Compute the source coordinates relative to the video element's intrinsic resolution.
+    const sX = (cropRect.x - videoOffsetX) * videoScaleX;
+    const sY = (cropRect.y - videoOffsetY) * videoScaleY;
+    const sWidth = cropRect.width * videoScaleX;
+    const sHeight = cropRect.height * videoScaleY;
 
-    // Draw the corresponding portion of the video onto the canvas, scaling down to canvas size
-    ctx.drawImage(
-      videoElement,
-      videoCropX, videoCropY, videoCropWidth, videoCropHeight,
-      0, 0, cropRect.width, cropRect.height
-    );
-    // Continue updating if stream is live
+    ctx.drawImage(videoElement, sX, sY, sWidth, sHeight, 0, 0, cropRect.width, cropRect.height);
     captureAnimationFrame = requestAnimationFrame(updateCroppedCanvas);
   }
 
-  // Enable user to select crop region on the display container
+  // Enable user to select crop region on the display container.
   function enableCropSelection() {
     cropOverlay.hidden = false;
     cropOverlay.style.left = '0px';
@@ -93,7 +87,7 @@
     displayContainer.addEventListener('mousedown', startSelection);
     displayContainer.addEventListener('mousemove', updateSelection);
     displayContainer.addEventListener('mouseup', finishSelection);
-    // Ensure touch events work too
+    // Ensure touch events work too.
     displayContainer.addEventListener('touchstart', startSelection);
     displayContainer.addEventListener('touchmove', updateSelection);
     displayContainer.addEventListener('touchend', finishSelection);
@@ -161,12 +155,12 @@
   }
 
   selectCropBtn.addEventListener('click', () => {
-    // Enable crop selection only if video is visible and streaming
+    // Enable crop selection only if video is visible and streaming.
     if (!videoElement.srcObject) return;
-    // Reset any previous crop
+    // Reset any previous crop.
     cropRect = null;
     applyCropBtn.disabled = true;
-    // Enable selection mode and show instructions by enabling the overlay
+    // Enable selection mode and show instructions by enabling the overlay.
     enableCropSelection();
   });
 
@@ -175,31 +169,41 @@
       alert("Please select a crop region first.");
       return;
     }
-    // Hide the video element and show the canvas with cropped region
+    // Capture the video element's positioning and scaling metrics before hiding it.
+    // This is required because once the video element is hidden (display: none),
+    // its layout metrics (clientWidth/clientHeight) become 0.
+    const videoRect = videoElement.getBoundingClientRect();
+    const containerRect = displayContainer.getBoundingClientRect();
+    videoOffsetX = videoRect.left - containerRect.left;
+    videoOffsetY = videoRect.top - containerRect.top;
+    videoScaleX = videoElement.videoWidth / videoElement.clientWidth;
+    videoScaleY = videoElement.videoHeight / videoElement.clientHeight;
+
+    // Hide the video element and show the canvas with cropped region.
     videoElement.style.display = 'none';
     croppedCanvas.style.display = 'block';
-    // Start updating the canvas continuously
+    // Start updating the canvas continuously.
     updateCroppedCanvas();
-    // Disable crop selection buttons until reset
+    // Disable crop selection buttons until reset.
     selectCropBtn.disabled = true;
     applyCropBtn.disabled = true;
   });
 
   resetBtn.addEventListener('click', () => {
-    // Reset to original video view
+    // Reset to original video view.
     if (captureAnimationFrame) {
       cancelAnimationFrame(captureAnimationFrame);
       captureAnimationFrame = null;
     }
     croppedCanvas.style.display = 'none';
     videoElement.style.display = 'block';
-    // Reset crop rectangle and re-enable crop selection
+    // Reset crop rectangle and re-enable crop selection.
     cropRect = null;
     selectCropBtn.disabled = false;
     applyCropBtn.disabled = true;
   });
 
-  // Bind event listener for start capture button
+  // Bind event listener for start capture button.
   captureBtn.addEventListener('click', () => {
     startCapture();
   });
