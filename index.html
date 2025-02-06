@@ -1,34 +1,35 @@
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Live Window/Tab Capture with Cropping</title>
-  <link rel="stylesheet" href="style.css" />
-</head>
-<body>
-  <header>
-    <h1>Live Window / Browser Tab Capture with Cropping</h1>
-  </header>
-  <main>
-    <section id="controls">
-      <button id="capture-btn">Select Screen To Capture</button>
-      <button id="select-crop-btn" disabled>Select Crop Region</button>
-      <button id="apply-crop-btn" disabled>Apply Crop</button>
-      <button id="reset-btn" disabled>Reset Crop</button>
-    </section>
-    <section id="display-container">
-      <!-- Video container which will show the live screen capture -->
-      <video id="capture-video" playsinline autoplay></video>
-      <!-- Canvas for cropped output -->
-      <canvas id="cropped-canvas"></canvas>
-      <!-- Cropping overlay -->
-      <div id="crop-overlay" hidden></div>
-    </section>
-  </main>
-  <footer>
-    <p>Note: This feature requires browser support for Screen Capture API.</p>
-  </footer>
-  <script src="script.js" type="module"></script>
-<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"4c6229722a6346bc8eb5cb0e5eae5d41","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Live Window/Tab Capture with Cropping</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Live Window / Browser Tab Capture</h1>
+    </header>
+    <main>
+      <section id="controls">
+        <button id="capture-btn">Select Screen To Capture</button>
+        <button id="crop-btn">Select Crop Region</button>
+        <button id="reset-crop-btn" style="display:none;">Reset Crop</button>
+      </section>
+      <section id="display-container">
+        <!-- Video container which will show the live screen capture -->
+        <video id="capture-video" playsinline autoplay></video>
+        <!-- Cropping overlay (positioned on top of the video) -->
+        <div id="crop-overlay"></div>
+      </section>
+      <section id="cropped-feed">
+        <h2>Cropped Feed</h2>
+        <canvas id="cropped-canvas"></canvas>
+      </section>
+    </main>
+    <footer>
+      <p>Note: This feature requires browser support for Screen Capture API.</p>
+    </footer>
+    <script src="script.js" type="module"></script>
+  <script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"4c6229722a6346bc8eb5cb0e5eae5d41","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 </body>
 </html>
