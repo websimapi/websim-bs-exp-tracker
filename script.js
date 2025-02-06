@@ -11,11 +11,20 @@
   const croppedCanvas = document.getElementById('cropped-canvas');
   const croppedCtx = croppedCanvas.getContext('2d');
 
+  // New UI elements for testing color removal
+  const removalColorInput = document.getElementById('removal-color-input');
+  const addColorBtn = document.getElementById('add-color-btn');
+  const testColorList = document.getElementById('test-color-list');
+  const clearTestColorsBtn = document.getElementById('clear-test-colors-btn');
+
   let cropRegion = null; // { x, y, w, h } relative to the video element's displayed area
   let isSelecting = false;
   let startX = 0;
   let startY = 0;
   let cropAnimationFrameID = null;
+
+  // Array to hold dynamically added test removal colors
+  let testRemovalColors = [];
 
   // Start screen capture
   async function startCapture() {
@@ -171,7 +180,9 @@
     const imageData = croppedCtx.getImageData(0, 0, cropRegion.w, cropRegion.h);
     const data = imageData.data;
     const tolerance = 2; // Allow a variation of +/-2 per RGB component
-    const targetColors = [
+
+    // Permanent target colors to remove
+    const permanentTargetColors = [
       { r: 0x29, g: 0x2c, b: 0x29 }, // #292c29
       { r: 0x29, g: 0x2a, b: 0x29 }, // #292a29
       { r: 0x2a, g: 0x2c, b: 0x29 }, // #2a2c29
@@ -194,12 +205,14 @@
       { r: 0x2c, g: 0x31, b: 0x2d }, // #2c312d
       { r: 0x30, g: 0x3f, b: 0x2c }  // #303f2c
     ];
+    // Merge permanent colors with any test removal colors added via UI
+    const allTargetColors = permanentTargetColors.concat(testRemovalColors);
 
     for (let i = 0; i < data.length; i += 4) {
       const r = data[i];
       const g = data[i + 1];
       const b = data[i + 2];
-      for (const color of targetColors) {
+      for (const color of allTargetColors) {
         if (
           Math.abs(r - color.r) <= tolerance &&
           Math.abs(g - color.g) <= tolerance &&
@@ -215,7 +228,6 @@
       }
     }
     croppedCtx.putImageData(imageData, 0, 0);
-
     cropAnimationFrameID = requestAnimationFrame(updateCroppedFeed);
   }
 
@@ -257,4 +269,43 @@
   function rgbToHex(r, g, b) {
     return '#' + componentToHex(r) + componentToHex(g) + componentToHex(b);
   }
+
+  // Helper function to convert Hex to RGB
+  function hexToRGB(hex) {
+    hex = hex.replace('#', '');
+    if (hex.length === 3) {
+      hex = hex.split('').map(c => c + c).join('');
+    }
+    const bigint = parseInt(hex, 16);
+    return {
+      r: (bigint >> 16) & 255,
+      g: (bigint >> 8) & 255,
+      b: bigint & 255
+    };
+  }
+
+  // Event listener for adding test removal colors via UI
+  addColorBtn.addEventListener('click', () => {
+    const colorHex = removalColorInput.value;
+    const rgb = hexToRGB(colorHex);
+    testRemovalColors.push(rgb);
+    updateTestColorList();
+  });
+
+  // Update the UI list for test removal colors
+  function updateTestColorList() {
+    testColorList.innerHTML = '';
+    testRemovalColors.forEach((color) => {
+      const li = document.createElement('li');
+      li.textContent = rgbToHex(color.r, color.g, color.b);
+      li.style.backgroundColor = rgbToHex(color.r, color.g, color.b);
+      testColorList.appendChild(li);
+    });
+  }
+
+  // Event listener to clear all test removal colors
+  clearTestColorsBtn.addEventListener('click', () => {
+    testRemovalColors = [];
+    updateTestColorList();
+  });
 })();
