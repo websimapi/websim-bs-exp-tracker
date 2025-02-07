@@ -1,0 +1,70 @@
+/* Custom select styling to display icons with text */
+.custom-select-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 250px;
+  text-align: left;
+}
+.custom-select {
+  position: relative;
+  display: block;
+  cursor: pointer;
+  background: #fff;
+  border: 2px solid #ccc;
+  border-radius: 4px;
+  padding: 10px;
+  user-select: none;
+}
+.custom-select:after {
+  content: '';
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 6px solid transparent;
+  border-top-color: #333;
+}
+.custom-select.open:after {
+  border-top-color: transparent;
+  border-bottom-color: #333;
+}
+.custom-select-text {
+  display: flex;
+  align-items: center;
+}
+.custom-select-text img {
+  width: 20px;
+  height: auto;
+  margin-right: 8px;
+}
+.custom-options {
+  position: absolute;
+  top: calc(100% + 2px);
+  left: 0;
+  right: 0;
+  border: 2px solid #ccc;
+  border-top: none;
+  background: #fff;
+  border-radius: 0 0 4px 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 999;
+  display: none;
+}
+.custom-options .custom-option {
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+.custom-options .custom-option:hover {
+  background: #f0f8ff;
+}
+.custom-options .custom-option img {
+  width: 20px;
+  height: auto;
+  margin-right: 8px;
+}
+.custom-option.selected {
+  background: #e9ecef;
+}

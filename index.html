@@ -22,28 +22,28 @@
         <button id="capture-btn">Select Screen To Capture</button>
         <button id="crop-btn">Select Crop Region</button>
         <button id="reset-crop-btn" style="display:none;">Reset Crop</button>
-        <!-- Labeling Controls: Skill dropdown with icons for OCR readings -->
+        <!-- Labeling Controls: Custom Skill dropdown with icons for OCR readings -->
         <div id="labeling-controls">
           <label for="skill-select">Select Skill: </label>
-          <!-- Replacing the custom dropdown div with a visible select element -->
+          <!-- The select element will be transformed into a custom dropdown with icons -->
           <select id="skill-select">
-            <option value="chef_icon">Chef</option>
-            <option value="woodcutter_icon">Woodcutter</option>
-            <option value="forager_icon">Forager</option>
-            <option value="alchemist_potion">Alchemist</option>
-            <option value="fisher_icon">Fisher</option>
-            <option value="pixel_bone_icon">Bonewright</option>
-            <option value="blacksmith_ingot">Blacksmith</option>
-            <option value="detective_icon">Detective</option>
-            <option value="merchant_stall_icon">Merchant</option>
-            <option value="stonemason_icon">Stonemason</option>
-            <option value="circular_saw_blade">Carpenter</option>
-            <option value="shield_sword_icon">Watchperson</option>
-            <option value="sword_and_shield">Guard</option>
-            <option value="mining_pickaxe_icon">Miner</option>
-            <option value="gatherer_icon">Gatherer</option>
-            <option value="leatherworker_icon">Leatherworker</option>
-            <option value="scout_sword_icon">Scout</option>
+            <option value="chef_icon" data-icon="/36px-Chef_icon.webp">Chef</option>
+            <option value="woodcutter_icon" data-icon="/36px-Woodcutter_icon.webp">Woodcutter</option>
+            <option value="forager_icon" data-icon="/36px-Forager_icon.webp">Forager</option>
+            <option value="alchemist_potion" data-icon="/32px-Alchemist_icon.webp">Alchemist</option>
+            <option value="fisher_icon" data-icon="/36px-Fisher_icon.webp">Fisher</option>
+            <option value="pixel_bone_icon" data-icon="/36px-Bonewright_icon.webp">Bonewright</option>
+            <option value="blacksmith_ingot" data-icon="/36px-Blacksmith_icon.webp">Blacksmith</option>
+            <option value="detective_icon" data-icon="/32px-Detective_icon.webp">Detective</option>
+            <option value="merchant_stall_icon" data-icon="/36px-Merchant_icon.webp">Merchant</option>
+            <option value="stonemason_icon" data-icon="/30px-Stonemason_icon.webp">Stonemason</option>
+            <option value="circular_saw_blade" data-icon="/36px-Carpenter_icon.webp">Carpenter</option>
+            <option value="shield_sword_icon" data-icon="/36px-Watchperson_icon.webp">Watchperson</option>
+            <option value="sword_and_shield" data-icon="/36px-Guard_icon.webp">Guard</option>
+            <option value="mining_pickaxe_icon" data-icon="/36px-Miner_icon.webp">Miner</option>
+            <option value="gatherer_icon" data-icon="/36px-Gatherer_icon.webp">Gatherer</option>
+            <option value="leatherworker_icon" data-icon="/36px-Leatherworker_icon.webp">Leatherworker</option>
+            <option value="scout_sword_icon" data-icon="/36px-Scout_icon.webp">Scout</option>
           </select>
           <button id="reset-exp-btn">Reset Exp Rate</button>
           <button id="clear-ocr-btn">Clear OCR List</button>
@@ -87,7 +87,7 @@
     </div>
     <!-- Include Tesseract.js from CDN -->
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.5/dist/tesseract.min.js"></script>
-    <!-- Custom Skill Dropdown JS (if needed, can be removed if no extra functionality is required) -->
+    <!-- Custom Skill Dropdown JS -->
     <script src="./js/customSelect.js" type="module"></script>
     <!-- Main entry point -->
     <script src="./js/main.js" type="module"></script>

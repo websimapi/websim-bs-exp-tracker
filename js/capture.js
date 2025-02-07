@@ -58,7 +58,6 @@ function startCrop(e) {
   if (!videoElement.srcObject) return;
   const containerRect = displayContainer.getBoundingClientRect();
   const videoRect = videoElement.getBoundingClientRect();
-  // Only allow starting crop if inside video bounds
   if (
     e.clientX < videoRect.left ||
     e.clientX > videoRect.right ||

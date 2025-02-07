@@ -15,7 +15,6 @@ function initSkillEvents({ skillSelect, resetExpBtn, clearOcrBtn, ocrResultsCont
 
   skillSelect.addEventListener("change", (e) => {
     currentSkill = e.target.value;
-    // When a new skill is selected, no need for a button press—the label is set automatically.
     renderSkillDataUI(document.getElementById("ocr-results-container"));
     updateExpRate(expRateDiv);
     updateTotalExp(totalExpDiv);
@@ -169,7 +168,6 @@ function renderSkillDataUI(ocrResultsContainer) {
       groupDiv.appendChild(p);
     } else {
       const ul = document.createElement("ul");
-      // Render in reverse order
       const reversedReadings = skillData[skill].slice().reverse();
       reversedReadings.forEach((reading) => {
         const li = document.createElement("li");
@@ -180,7 +178,6 @@ function renderSkillDataUI(ocrResultsContainer) {
         deleteBtn.addEventListener("click", (e) => {
           e.stopPropagation();
           if (confirm("Are you sure you want to delete this OCR reading?")) {
-            // Remove the reading with matching timestamp
             skillData[skill] = skillData[skill].filter(r => r.timestamp !== reading.timestamp);
             saveSkillData();
             renderSkillDataUI(ocrResultsContainer);
@@ -199,7 +196,7 @@ function renderSkillDataUI(ocrResultsContainer) {
   }
 }
 
-// New functions for Journal / Archive
+// Journal / Archive functions
 
 function loadJournalData() {
   const stored = localStorage.getItem("journalData");
@@ -236,7 +233,6 @@ function archiveData(expRateDiv, totalExpDiv, ocrResultsContainer) {
   if (!journalData[currentSkill]) {
     journalData[currentSkill] = [];
   }
-  // Allow multiple archives per day without blocking duplicates
   const journalEntry = {
     date: dateStr,
     time: archiveTime,
@@ -259,18 +255,15 @@ function renderJournalDataUI(archiveContainer) {
   archiveContainer.innerHTML = "";
   const journalData = loadJournalData();
   let hasEntries = false;
-  // Iterate over all skills in the journal data
   for (const skill in journalData) {
     const entries = journalData[skill];
     if (!entries || !Array.isArray(entries) || entries.length === 0) continue;
     hasEntries = true;
-    // Create a container for this skill's journal entries
     const skillContainer = document.createElement("div");
     skillContainer.className = "journal-skill-group";
     const skillHeader = document.createElement("h3");
     skillHeader.textContent = "Skill: " + skill;
     skillContainer.appendChild(skillHeader);
-    // Sort entries in descending order by date then time
     entries.sort((a, b) => {
       if (a.date === b.date) {
         return b.time.localeCompare(a.time);
@@ -300,7 +293,6 @@ function renderJournalDataUI(archiveContainer) {
         e.stopPropagation();
         if (confirm("Are you sure you want to delete this archive entry?")) {
           let jData = loadJournalData();
-          // Remove the matching entry based on date, time and skill
           if (jData[skill] && Array.isArray(jData[skill])) {
             jData[skill] = jData[skill].filter(en => !(en.date === entry.date && en.time === entry.time && en.skill === skill));
             saveJournalData(jData);
@@ -317,7 +309,6 @@ function renderJournalDataUI(archiveContainer) {
   }
 }
 
-// Function to clear all archived journal data with confirmation (clear archive button)
 function clearJournalData(archiveContainer) {
   if (confirm("Are you sure you want to clear all archive data? This will remove all journal entries.")) {
     localStorage.removeItem("journalData");
@@ -327,7 +318,6 @@ function clearJournalData(archiveContainer) {
 }
 
 function autoArchiveAll(expRateDiv, totalExpDiv, ocrResultsContainer) {
-  // This function remains unchanged but is no longer automatically called.
   const now = new Date();
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   let journalData = loadJournalData();
@@ -364,8 +354,6 @@ function autoArchiveAll(expRateDiv, totalExpDiv, ocrResultsContainer) {
   }
 }
 
-// New functions for Export/Import Archive Data
-
 function exportJournalData() {
   const journalData = loadJournalData();
   return JSON.stringify(journalData, null, 2);
@@ -376,15 +364,12 @@ function importJournalData(importedData, merge = false) {
   try {
     const newData = JSON.parse(importedData);
     if (!merge) {
-      // Override
       currentData = newData;
     } else {
-      // Merge: iterate over skills and concatenate arrays
       for (const skill in newData) {
         if (!currentData[skill]) {
           currentData[skill] = newData[skill];
         } else {
-          // Append each new entry, without duplicate based on date, time, skill
           newData[skill].forEach(newEntry => {
             const exists = currentData[skill].find(existingEntry => 
               existingEntry.date === newEntry.date && existingEntry.time === newEntry.time
