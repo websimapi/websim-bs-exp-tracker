@@ -282,7 +282,7 @@ function renderJournalDataUI(archiveContainer) {
         <details class="journal-entry-details">
           <summary>Readings</summary>
           <ul>
-            ${entry.readings?.map(r => `<li>${r.value} (${new Date(r.timestamp).toLocaleTimeString()})</li>`).join('') || '<li>No readings</li>'}
+            ${entry.readings ? entry.readings.map(r => `<li>${r.value} (${new Date(r.timestamp).toLocaleTimeString()})</li>`).join('') : '<li>No readings</li>'}
           </ul>
         </details>
       `;
@@ -291,8 +291,7 @@ function renderJournalDataUI(archiveContainer) {
         e.stopPropagation();
         if (confirm("Are you sure you want to delete this archive entry?")) {
           let jData = loadJournalData();
-          // Use optional chaining to avoid errors if readings is undefined
-          jData[skill] = jData[skill].filter(en => en.date !== entry.date || (en.readings?.toString() !== entry.readings?.toString()));
+          jData[skill] = jData[skill].filter(en => en.date !== entry.date);
           saveJournalData(jData);
           renderJournalDataUI(archiveContainer);
         }
