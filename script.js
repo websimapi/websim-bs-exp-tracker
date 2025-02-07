@@ -18,14 +18,19 @@
   let startY = 0;
   let cropAnimationFrameID = null;
   
-  // Global variable for auto OCR detection and current skill label
+  // Global variables for OCR and current label
   let previousOCRFrame = '';
   let ocrInProgress = false;
   let currentSkill = '';
 
-  // Event listener for skill selection - sets the current label
+  // Load skill data from Local Storage
+  let skillData = loadSkillData();
+
+  // When the user selects a skill, update the current label and UI
   skillSelect.addEventListener('change', (e) => {
     currentSkill = e.target.value;
+    renderSkillDataUI();
+    updateExpRate();
   });
 
   // Start screen capture
@@ -193,8 +198,8 @@
 
   // Auto-detect frame changes and perform OCR on the cropped feed.
   async function autoOCRCheck() {
-    if (!cropRegion) {
-      previousOCRFrame = '';
+    if (!cropRegion || !videoElement.srcObject) {
+      croppedCtx.clearRect(0, 0, croppedCanvas.width, croppedCanvas.height);
       return;
     }
     let currentDataURL;
@@ -212,16 +217,33 @@
         const { data: { text } } = await Tesseract.recognize(croppedCanvas, 'eng', {
           logger: m => console.log(m)
         });
-        // Remove everything except for numbers from the result
-        const numbersOnly = text.replace(/[^0-9]/g, '').trim();
+        // Remove everything except numbers and optional dot
+        const numbersOnly = text.replace(/[^0-9.]/g, '').trim();
         if (numbersOnly) {
-          const li = document.createElement('li');
-          const now = new Date();
-          li.textContent = (currentSkill ? currentSkill + ": " : "") + numbersOnly + " (" + now.toLocaleTimeString() + ")";
-          li.dataset.value = numbersOnly;
-          li.dataset.timestamp = now.getTime();
-          document.getElementById('ocr-result-list').appendChild(li);
-          updateExpRate();
+          const newNumber = parseFloat(numbersOnly);
+          if (isNaN(newNumber)) {
+            console.log("OCR result is not a valid number.");
+          } else {
+            // Only record if a skill is selected
+            if (!currentSkill) {
+              console.log("No skill selected, ignoring OCR reading.");
+            } else {
+              if (!skillData[currentSkill]) {
+                skillData[currentSkill] = [];
+              }
+              const readings = skillData[currentSkill];
+              // Ignore the reading if it is less than the last recorded value
+              if (readings.length > 0 && newNumber < readings[readings.length - 1].value) {
+                console.log("Ignored OCR reading, number is less than previous value.");
+              } else {
+                const now = new Date();
+                readings.push({ value: newNumber, timestamp: now.getTime() });
+                saveSkillData();
+                renderSkillDataUI();
+                updateExpRate();
+              }
+            }
+          }
         }
       } catch (err) {
         console.error('OCR error:', err);
@@ -231,30 +253,75 @@
     }
   }
 
-  // Calculate and update experience gain rate based on OCR results
+  // Calculate and update experience gain rate for the current skill
   function updateExpRate() {
-    const liElements = document.querySelectorAll('#ocr-result-list li');
-    if (liElements.length < 2) {
-      document.getElementById("exp-rate").textContent = "Exp Rate: N/A";
+    const expRateDiv = document.getElementById("exp-rate");
+    if (!currentSkill || !skillData[currentSkill] || skillData[currentSkill].length < 2) {
+      expRateDiv.textContent = "Exp Rate: N/A";
       return;
     }
-    const first = liElements[0];
-    const last = liElements[liElements.length - 1];
-    const firstValue = parseFloat(first.dataset.value);
-    const lastValue = parseFloat(last.dataset.value);
-    const firstTimestamp = parseInt(first.dataset.timestamp);
-    const lastTimestamp = parseInt(last.dataset.timestamp);
-    const deltaExp = lastValue - firstValue;
-    const deltaTimeMs = lastTimestamp - firstTimestamp;
+    const readings = skillData[currentSkill];
+    const first = readings[0];
+    const last = readings[readings.length - 1];
+    const deltaExp = last.value - first.value;
+    const deltaTimeMs = last.timestamp - first.timestamp;
     if (deltaTimeMs <= 0) {
-      document.getElementById("exp-rate").textContent = "Exp Rate: N/A";
+      expRateDiv.textContent = "Exp Rate: N/A";
       return;
     }
     const deltaHours = deltaTimeMs / (3600 * 1000);
     const expRate = deltaExp / deltaHours;
-    document.getElementById("exp-rate").textContent = "Exp Rate: " + expRate.toFixed(2) + " xp/h";
+    expRateDiv.textContent = "Exp Rate (" + currentSkill + "): " + expRate.toFixed(2) + " xp/h";
   }
 
-  // Check for frame changes every second
+  // Render the OCR readings grouped by skill from Local Storage
+  function renderSkillDataUI() {
+    const container = document.getElementById("ocr-results-container");
+    container.innerHTML = "";
+    for (const skill in skillData) {
+      const groupDiv = document.createElement("div");
+      groupDiv.className = "skill-group";
+      const header = document.createElement("h3");
+      header.textContent = skill;
+      groupDiv.appendChild(header);
+      if (skillData[skill].length === 0) {
+        const p = document.createElement("p");
+        p.textContent = "No readings yet.";
+        groupDiv.appendChild(p);
+      } else {
+        const ul = document.createElement("ul");
+        skillData[skill].forEach(reading => {
+          const li = document.createElement("li");
+          li.textContent = reading.value + " (" + new Date(reading.timestamp).toLocaleTimeString() + ")";
+          ul.appendChild(li);
+        });
+        groupDiv.appendChild(ul);
+      }
+      container.appendChild(groupDiv);
+    }
+  }
+
+  // Load skill data from local storage
+  function loadSkillData() {
+    const stored = localStorage.getItem("skillData");
+    if (stored) {
+      try {
+        return JSON.parse(stored);
+      } catch (e) {
+        console.error("Error parsing skillData from localStorage:", e);
+      }
+    }
+    return {};
+  }
+  
+  // Save skill data to local storage
+  function saveSkillData() {
+    localStorage.setItem("skillData", JSON.stringify(skillData));
+  }
+
+  // Check for frame changes every second to trigger OCR if needed
   setInterval(autoOCRCheck, 1000);
+
+  // Initial render of stored skill data in the UI
+  renderSkillDataUI();
 })();
