@@ -22,13 +22,29 @@
         <button id="capture-btn">Select Screen To Capture</button>
         <button id="crop-btn">Select Crop Region</button>
         <button id="reset-crop-btn" style="display:none;">Reset Crop</button>
-        <!-- Labeling Controls: custom skill dropdown with icons for OCR readings -->
+        <!-- Labeling Controls: Skill dropdown with icons for OCR readings -->
         <div id="labeling-controls">
           <label for="skill-select">Select Skill: </label>
-          <!-- Custom dropdown placeholder -->
-          <div id="skill-dropdown"></div>
-          <!-- Hidden input to store selected skill value -->
-          <input type="hidden" id="skill-select" value="" />
+          <!-- Replacing the custom dropdown div with a visible select element -->
+          <select id="skill-select">
+            <option value="chef_icon">Chef</option>
+            <option value="woodcutter_icon">Woodcutter</option>
+            <option value="forager_icon">Forager</option>
+            <option value="alchemist_potion">Alchemist</option>
+            <option value="fisher_icon">Fisher</option>
+            <option value="pixel_bone_icon">Bonewright</option>
+            <option value="blacksmith_ingot">Blacksmith</option>
+            <option value="detective_icon">Detective</option>
+            <option value="merchant_stall_icon">Merchant</option>
+            <option value="stonemason_icon">Stonemason</option>
+            <option value="circular_saw_blade">Carpenter</option>
+            <option value="shield_sword_icon">Watchperson</option>
+            <option value="sword_and_shield">Guard</option>
+            <option value="mining_pickaxe_icon">Miner</option>
+            <option value="gatherer_icon">Gatherer</option>
+            <option value="leatherworker_icon">Leatherworker</option>
+            <option value="scout_sword_icon">Scout</option>
+          </select>
           <button id="reset-exp-btn">Reset Exp Rate</button>
           <button id="clear-ocr-btn">Clear OCR List</button>
           <!-- Archive Buttons -->
@@ -71,7 +87,7 @@
     </div>
     <!-- Include Tesseract.js from CDN -->
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.5/dist/tesseract.min.js"></script>
-    <!-- Custom Skill Dropdown JS -->
+    <!-- Custom Skill Dropdown JS (if needed, can be removed if no extra functionality is required) -->
     <script src="./js/customSelect.js" type="module"></script>
     <!-- Main entry point -->
     <script src="./js/main.js" type="module"></script>
