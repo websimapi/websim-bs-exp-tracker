@@ -9,13 +9,14 @@ function initSkillEvents({ skillSelect, resetExpBtn, clearOcrBtn, ocrResultsCont
   // Load stored data
   skillData = loadSkillData();
   expResetData = loadExpResetData();
-  renderSkillDataUI(ocrResultsContainer);
+  renderSkillDataUI(document.getElementById("ocr-results-container"));
   updateExpRate(expRateDiv);
   updateDailyExp(dailyExpDiv);
 
   skillSelect.addEventListener("change", (e) => {
     currentSkill = e.target.value;
-    renderSkillDataUI(ocrResultsContainer);
+    // When a new skill is selected, no need for a button press—the label is set automatically.
+    renderSkillDataUI(document.getElementById("ocr-results-container"));
     updateExpRate(expRateDiv);
     updateDailyExp(dailyExpDiv);
   });
@@ -44,7 +45,7 @@ function initSkillEvents({ skillSelect, resetExpBtn, clearOcrBtn, ocrResultsCont
     if (confirm(`Are you sure you want to clear the OCR list for ${currentSkill}? This cannot be undone.`)) {
       skillData[currentSkill] = [];
       saveSkillData();
-      renderSkillDataUI(ocrResultsContainer);
+      renderSkillDataUI(document.getElementById("ocr-results-container"));
       updateExpRate(expRateDiv);
       updateDailyExp(dailyExpDiv);
     }
@@ -67,7 +68,7 @@ function addSkillReading(newNumber, expRateDiv, dailyExpDiv, ocrResultsContainer
   const now = Date.now();
   readings.push({ value: newNumber, timestamp: now });
   saveSkillData();
-  renderSkillDataUI(ocrResultsContainer);
+  renderSkillDataUI(document.getElementById("ocr-results-container"));
   updateExpRate(expRateDiv);
   updateDailyExp(dailyExpDiv);
 }
@@ -224,6 +225,7 @@ function archiveTodayData(expRateDiv, dailyExpDiv, ocrResultsContainer) {
   }
   const journalEntry = {
     date: dateStr,
+    skill: currentSkill,
     readings: todaysReadings,
     dailyExp: dailyExp
   };
@@ -240,28 +242,43 @@ function archiveTodayData(expRateDiv, dailyExpDiv, ocrResultsContainer) {
 
 function renderJournalDataUI(archiveContainer) {
   archiveContainer.innerHTML = "";
-  if (!currentSkill) {
-    archiveContainer.innerHTML = "<p>Please select a skill to view archived entries.</p>";
-    return;
-  }
   const journalData = loadJournalData();
-  const entries = journalData[currentSkill] || [];
-  if (entries.length === 0) {
-    archiveContainer.innerHTML = "<p>No archived entries for " + currentSkill + ".</p>";
-    return;
+  let hasEntries = false;
+  // Iterate over all skills in the journal data
+  for (const skill in journalData) {
+    const entries = journalData[skill];
+    if (!entries || entries.length === 0) continue;
+    hasEntries = true;
+    // Create a container for this skill's journal entries
+    const skillContainer = document.createElement("div");
+    skillContainer.className = "journal-skill-group";
+    const skillHeader = document.createElement("h3");
+    skillHeader.textContent = "Skill: " + skill;
+    skillContainer.appendChild(skillHeader);
+    // Sort entries in descending order by date
+    entries.sort((a, b) => b.date.localeCompare(a.date));
+    entries.forEach(entry => {
+      const entryDiv = document.createElement("div");
+      entryDiv.className = "journal-entry";
+      entryDiv.innerHTML = `
+        <div class="journal-entry-header">
+          <span><strong>Date:</strong> ${entry.date}</span> |
+          <span><strong>Daily EXP:</strong> ${entry.dailyExp.toFixed(2)}</span>
+        </div>
+        <details class="journal-entry-details">
+          <summary>Readings</summary>
+          <ul>
+            ${entry.readings.map(r => `<li>${r.value} (${new Date(r.timestamp).toLocaleTimeString()})</li>`).join('')}
+          </ul>
+        </details>
+      `;
+      skillContainer.appendChild(entryDiv);
+    });
+    archiveContainer.appendChild(skillContainer);
   }
-  // Sort entries in descending order by date
-  entries.sort((a, b) => b.date.localeCompare(a.date));
-  entries.forEach(entry => {
-    const entryDiv = document.createElement("div");
-    entryDiv.className = "journal-entry";
-    entryDiv.innerHTML = "<strong>Date:</strong> " + entry.date + "<br>" +
-                         "<strong>Daily EXP:</strong> " + entry.dailyExp.toFixed(2) + "<br>" +
-                         "<details><summary>Readings</summary><ul>" +
-                         entry.readings.map(r => "<li>" + r.value + " (" + new Date(r.timestamp).toLocaleTimeString() + ")</li>").join("") +
-                         "</ul></details>";
-    archiveContainer.appendChild(entryDiv);
-  });
+  if (!hasEntries) {
+    archiveContainer.innerHTML = "<p>No archived entries available.</p>";
+  }
 }
 
 function autoArchiveAll(expRateDiv, dailyExpDiv, ocrResultsContainer) {
@@ -283,6 +300,7 @@ function autoArchiveAll(expRateDiv, dailyExpDiv, ocrResultsContainer) {
     if (exists) continue;
     const journalEntry = {
       date: dateStr,
+      skill: skill,
       readings: previousReadings,
       dailyExp: dailyExp
     };
@@ -293,11 +311,9 @@ function autoArchiveAll(expRateDiv, dailyExpDiv, ocrResultsContainer) {
   if (updated) {
     saveJournalData(journalData);
     saveSkillData();
-    if (currentSkill) {
-      renderSkillDataUI(document.getElementById("ocr-results-container"));
-      updateExpRate(expRateDiv);
-      updateDailyExp(dailyExpDiv);
-    }
+    renderSkillDataUI(document.getElementById("ocr-results-container"));
+    updateExpRate(expRateDiv);
+    updateDailyExp(dailyExpDiv);
   }
 }
 

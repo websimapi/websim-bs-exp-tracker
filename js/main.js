@@ -25,7 +25,6 @@ window.addEventListener("DOMContentLoaded", () => {
   const viewJournalBtn = document.getElementById("view-journal-btn");
   const journalModal = document.getElementById("journal-modal");
   const journalEntries = document.getElementById("journal-entries");
-  const journalSkillName = document.getElementById("journal-skill-name");
   const modalClose = document.querySelector(".modal-close");
 
   // Initialize the capture module (screen capture, crop selection & cropped feed update)
@@ -77,8 +76,6 @@ window.addEventListener("DOMContentLoaded", () => {
 
   // View Archived Journal button event - open modal and render journal entries
   viewJournalBtn.addEventListener("click", () => {
-    // Set the modal heading to the currently selected skill (or empty if none)
-    journalSkillName.textContent = skillSelect.value || "None Selected";
     renderJournalDataUI(journalEntries);
     journalModal.style.display = "block";
   });

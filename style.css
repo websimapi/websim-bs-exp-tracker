@@ -273,3 +273,29 @@ main {
   padding: 8px;
   background: #fff;
 }
+
+/* New styles for archive UI grouping */
+.journal-skill-group {
+  border: 1px solid #888;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  padding: 10px;
+  background: #f7f7f7;
+}
+
+.journal-skill-group h3 {
+  margin-bottom: 10px;
+  font-size: 1.1rem;
+  color: #0056b3;
+}
+
+.journal-entry-header {
+  font-size: 0.95rem;
+  margin-bottom: 5px;
+}
+
+.journal-entry-details summary {
+  cursor: pointer;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
