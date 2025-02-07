@@ -11,7 +11,8 @@
   const croppedCanvas = document.getElementById('cropped-canvas');
   const croppedCtx = croppedCanvas.getContext('2d');
   const skillSelect = document.getElementById('skill-select');
-
+  const resetExpBtn = document.getElementById('reset-exp-btn'); // New button for resetting EXP rate
+  
   let cropRegion = null; // { x, y, w, h } relative to the video element's displayed area
   let isSelecting = false;
   let startX = 0;
@@ -25,11 +26,31 @@
 
   // Load skill data from Local Storage
   let skillData = loadSkillData();
+  // Load exp reset data from Local Storage (for resetting xp/hr calculations)
+  let expResetData = loadExpResetData();
 
   // When the user selects a skill, update the current label and UI
   skillSelect.addEventListener('change', (e) => {
     currentSkill = e.target.value;
     renderSkillDataUI();
+    updateExpRate();
+    updateDailyExp();
+  });
+
+  // Event listener for resetting the EXP Rate (new feature)
+  resetExpBtn.addEventListener('click', () => {
+    if (!currentSkill) {
+      alert("Please select a skill first to reset Exp Rate!");
+      return;
+    }
+    const readings = skillData[currentSkill];
+    if (!readings || readings.length === 0) {
+      alert("No readings available for selected skill to reset Exp Rate!");
+      return;
+    }
+    const lastReading = readings[readings.length - 1];
+    expResetData[currentSkill] = { baseline: lastReading.value, timestamp: lastReading.timestamp };
+    saveExpResetData();
     updateExpRate();
   });
 
@@ -241,6 +262,7 @@
                 saveSkillData();
                 renderSkillDataUI();
                 updateExpRate();
+                updateDailyExp();
               }
             }
           }
@@ -253,7 +275,7 @@
     }
   }
 
-  // Calculate and update experience gain rate for the current skill
+  // Calculate and update experience gain rate for the current skill using reset data if available
   function updateExpRate() {
     const expRateDiv = document.getElementById("exp-rate");
     if (!currentSkill || !skillData[currentSkill] || skillData[currentSkill].length < 2) {
@@ -261,10 +283,19 @@
       return;
     }
     const readings = skillData[currentSkill];
-    const first = readings[0];
-    const last = readings[readings.length - 1];
-    const deltaExp = last.value - first.value;
-    const deltaTimeMs = last.timestamp - first.timestamp;
+    let startReading = readings[0];
+    if (expResetData[currentSkill]) {
+      const resetTimestamp = expResetData[currentSkill].timestamp;
+      const postResetReadings = readings.filter(r => r.timestamp >= resetTimestamp);
+      if (postResetReadings.length > 0) {
+        startReading = postResetReadings[0];
+      } else {
+        startReading = { value: expResetData[currentSkill].baseline, timestamp: expResetData[currentSkill].timestamp };
+      }
+    }
+    const lastReading = readings[readings.length - 1];
+    const deltaExp = lastReading.value - startReading.value;
+    const deltaTimeMs = lastReading.timestamp - startReading.timestamp;
     if (deltaTimeMs <= 0) {
       expRateDiv.textContent = "Exp Rate: N/A";
       return;
@@ -272,6 +303,27 @@
     const deltaHours = deltaTimeMs / (3600 * 1000);
     const expRate = deltaExp / deltaHours;
     expRateDiv.textContent = "Exp Rate (" + currentSkill + "): " + expRate.toFixed(2) + " xp/h";
+  }
+
+  // Update and display daily EXP gain for the current skill
+  function updateDailyExp() {
+    const dailyExpDiv = document.getElementById("daily-exp");
+    if (!currentSkill || !skillData[currentSkill] || skillData[currentSkill].length === 0) {
+      dailyExpDiv.textContent = "Daily EXP: N/A";
+      return;
+    }
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const startOfDay = today.getTime();
+    const readingsToday = skillData[currentSkill].filter(r => r.timestamp >= startOfDay);
+    if (readingsToday.length < 2) {
+      dailyExpDiv.textContent = "Daily EXP: N/A";
+      return;
+    }
+    const first = readingsToday[0];
+    const last = readingsToday[readingsToday.length - 1];
+    const deltaExp = last.value - first.value;
+    dailyExpDiv.textContent = "Daily EXP (" + currentSkill + "): " + deltaExp.toFixed(2);
   }
 
   // Render the OCR readings grouped by skill from Local Storage
@@ -317,6 +369,24 @@
   // Save skill data to local storage
   function saveSkillData() {
     localStorage.setItem("skillData", JSON.stringify(skillData));
+  }
+  
+  // Load exp reset data from local storage
+  function loadExpResetData() {
+    const stored = localStorage.getItem("expResetData");
+    if (stored) {
+      try {
+        return JSON.parse(stored);
+      } catch (e) {
+        console.error("Error parsing expResetData from localStorage:", e);
+      }
+    }
+    return {};
+  }
+  
+  // Save exp reset data to local storage
+  function saveExpResetData() {
+    localStorage.setItem("expResetData", JSON.stringify(expResetData));
   }
 
   // Check for frame changes every second to trigger OCR if needed

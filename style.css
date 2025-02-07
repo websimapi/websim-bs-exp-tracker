@@ -71,6 +71,23 @@ main {
   background-color: #f0f8ff;
 }
 
+/* Reset Exp Rate Button in Labeling Controls */
+#labeling-controls button {
+  background-color: #28a745;
+  border: none;
+  color: white;
+  padding: 10px 16px;
+  font-size: 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  margin-left: 8px;
+}
+
+#labeling-controls button:hover {
+  background-color: #1e7e34;
+}
+
 /* Display container styling */
 #display-container {
   position: relative;
@@ -122,6 +139,17 @@ main {
   margin-top: 10px;
   padding: 10px;
   background: #e9ecef;
+  border: 2px solid #ccc;
+  border-radius: 4px;
+}
+
+/* Daily EXP display styling */
+#daily-exp {
+  text-align: center;
+  font-size: 1.2rem;
+  margin-top: 10px;
+  padding: 10px;
+  background: #fff;
   border: 2px solid #ccc;
   border-radius: 4px;
 }
