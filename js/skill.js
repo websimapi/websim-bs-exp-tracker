@@ -37,13 +37,10 @@ function initSkillEvents({ skillSelect, resetExpBtn, clearOcrBtn, ocrResultsCont
     updateTotalExp(totalExpDiv);
   });
 
+  // Updated Clear OCR List button to clear ALL OCR readings rather than just the selected skill.
   clearOcrBtn.addEventListener("click", () => {
-    if (!currentSkill) {
-      alert("Please select a skill first to clear OCR list!");
-      return;
-    }
-    if (confirm(`Are you sure you want to clear the OCR list for ${currentSkill}? This cannot be undone.`)) {
-      skillData[currentSkill] = [];
+    if (confirm("Are you sure you want to clear ALL OCR readings? This cannot be undone.")) {
+      skillData = {};
       saveSkillData();
       renderSkillDataUI(ocrResultsContainer);
       updateExpRate(expRateDiv);
