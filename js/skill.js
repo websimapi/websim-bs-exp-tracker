@@ -231,6 +231,7 @@ function archiveData(expRateDiv, totalExpDiv, ocrResultsContainer) {
   const lastVal = readings[readings.length - 1].value;
   const totalExp = lastVal - firstVal;
   const dateStr = new Date().toISOString().split('T')[0];
+  const archiveTime = new Date().toLocaleTimeString();
   let journalData = loadJournalData();
   if (!journalData[currentSkill]) {
     journalData[currentSkill] = [];
@@ -238,6 +239,7 @@ function archiveData(expRateDiv, totalExpDiv, ocrResultsContainer) {
   // Allow multiple archives per day without blocking duplicates
   const journalEntry = {
     date: dateStr,
+    time: archiveTime,
     skill: currentSkill,
     readings: readings,
     totalExp: totalExp
@@ -268,16 +270,21 @@ function renderJournalDataUI(archiveContainer) {
     const skillHeader = document.createElement("h3");
     skillHeader.textContent = "Skill: " + skill;
     skillContainer.appendChild(skillHeader);
-    // Sort entries in descending order by date
-    entries.sort((a, b) => b.date.localeCompare(a.date));
+    // Sort entries in descending order by date then time
+    entries.sort((a, b) => {
+      if (a.date === b.date) {
+        return b.time.localeCompare(a.time);
+      }
+      return b.date.localeCompare(a.date);
+    });
     entries.forEach(entry => {
       const entryDiv = document.createElement("div");
       entryDiv.className = "journal-entry";
       entryDiv.innerHTML = `
         <div class="journal-entry-header">
-          <span><strong>Date:</strong> ${entry.date}</span> |
+          <span><strong>Date:</strong> ${entry.date} ${entry.time ? "(" + entry.time + ")" : ""}</span> |
           <span><strong>Total Exp:</strong> ${entry.totalExp.toFixed(2)}</span>
-          <button class="delete-archive" data-skill="${skill}" data-date="${entry.date}">Delete</button>
+          <button class="delete-archive" data-skill="${skill}" data-date="${entry.date}" data-time="${entry.time}">Delete</button>
         </div>
         <details class="journal-entry-details">
           <summary>Readings</summary>
@@ -293,9 +300,9 @@ function renderJournalDataUI(archiveContainer) {
         e.stopPropagation();
         if (confirm("Are you sure you want to delete this archive entry?")) {
           let jData = loadJournalData();
-          // Remove the matching entry based on date and skill
+          // Remove the matching entry based on date, time and skill
           if (jData[skill] && Array.isArray(jData[skill])) {
-            jData[skill] = jData[skill].filter(en => en.date !== entry.date || JSON.stringify(en.readings) !== JSON.stringify(entry.readings));
+            jData[skill] = jData[skill].filter(en => !(en.date === entry.date && en.time === entry.time && en.skill === skill));
             saveJournalData(jData);
             renderJournalDataUI(archiveContainer);
           }
@@ -336,8 +343,10 @@ function autoArchiveAll(expRateDiv, totalExpDiv, ocrResultsContainer) {
     if (!journalData[skill]) journalData[skill] = [];
     const exists = journalData[skill].find(e => e.date === dateStr);
     if (exists) continue;
+    const archiveTime = new Date().toLocaleTimeString();
     const journalEntry = {
       date: dateStr,
+      time: archiveTime,
       skill: skill,
       readings: previousReadings,
       totalExp: totalExp
