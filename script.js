@@ -2,6 +2,11 @@
 
 // Encapsulate logic in an IIFE
 (() => {
+  // Override Tesseract workerPath to use a stable jsDelivr URL (resolving the importScripts error)
+  if (typeof Tesseract !== 'undefined') {
+    Tesseract.workerPath = 'https://cdn.jsdelivr.net/npm/tesseract.js@2.1.5/dist/worker.min.js';
+  }
+
   const captureBtn = document.getElementById('capture-btn');
   const videoElement = document.getElementById('capture-video');
   const cropBtn = document.getElementById('crop-btn');
