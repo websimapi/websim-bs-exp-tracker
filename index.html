@@ -2,7 +2,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Live Window/Tab Capture with Cropping & Auto OCR</title>
+    <title>Live Window/Tab Capture with Cropping, Auto OCR & Labeling</title>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
@@ -14,6 +14,32 @@
         <button id="capture-btn">Select Screen To Capture</button>
         <button id="crop-btn">Select Crop Region</button>
         <button id="reset-crop-btn" style="display:none;">Reset Crop</button>
+        <!-- New Labeling Controls -->
+        <div id="labeling-controls">
+          <label for="skill-select">Select Skill: </label>
+          <select id="skill-select">
+            <option value="">--Select Skill--</option>
+            <option value="Guard">Guard</option>
+            <option value="Chef">Chef</option>
+            <option value="Fisher">Fisher</option>
+            <option value="Forager">Forager</option>
+            <option value="Alchemist">Alchemist</option>
+            <option value="Woodcutter">Woodcutter</option>
+            <option value="Scout">Scout</option>
+            <option value="Gatherer">Gatherer</option>
+            <option value="Carpenter">Carpenter</option>
+            <option value="Minefighter">Minefighter</option>
+            <option value="Bonewright">Bonewright</option>
+            <option value="Miner">Miner</option>
+            <option value="Blacksmith">Blacksmith</option>
+            <option value="Stonemason">Stonemason</option>
+            <option value="Merchant">Merchant</option>
+            <option value="Detective">Detective</option>
+            <option value="Watchperson">Watchperson</option>
+            <option value="Leatherworker">Leatherworker</option>
+          </select>
+          <button id="label-list-btn">Label OCR List</button>
+        </div>
       </section>
       <section id="display-container">
         <!-- Video container which will show the live screen capture -->

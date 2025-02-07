@@ -10,6 +10,8 @@
   const cropOverlay = document.getElementById('crop-overlay');
   const croppedCanvas = document.getElementById('cropped-canvas');
   const croppedCtx = croppedCanvas.getContext('2d');
+  const labelListBtn = document.getElementById('label-list-btn');
+  const skillSelect = document.getElementById('skill-select');
 
   let cropRegion = null; // { x, y, w, h } relative to the video element's displayed area
   let isSelecting = false;
@@ -209,6 +211,7 @@
         if (numbersOnly) {
           const li = document.createElement('li');
           li.textContent = numbersOnly;
+          li.dataset.value = numbersOnly;
           document.getElementById('ocr-result-list').appendChild(li);
         }
       } catch (err) {
@@ -221,4 +224,21 @@
 
   // Check for frame changes every second
   setInterval(autoOCRCheck, 1000);
+
+  // Label the current OCR list with the selected skill name
+  labelListBtn.addEventListener('click', () => {
+    const selectedSkill = skillSelect.value;
+    if (!selectedSkill) {
+      alert("Please select a skill label.");
+      return;
+    }
+    const ocrList = document.getElementById('ocr-result-list');
+    const listItems = ocrList.getElementsByTagName('li');
+    for (const li of listItems) {
+      // Use the stored original number value to avoid duplicating labels
+      const originalValue = li.dataset.value || li.textContent;
+      li.textContent = `${selectedSkill}: ${originalValue}`;
+      li.dataset.labeled = "true";
+    }
+  });
 })();
