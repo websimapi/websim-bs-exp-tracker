@@ -1,5 +1,4 @@
 'use strict';
-import { createWorker } from 'https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.esm.js';
 
 // Encapsulate logic in an IIFE
 (() => {
@@ -18,37 +17,22 @@ import { createWorker } from 'https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/di
   let startY = 0;
   let cropAnimationFrameID = null;
 
-  // Start screen capture with proper permissions and error handling
+  // Start screen capture
   async function startCapture() {
     try {
-      // Use getDisplayMedia to capture screen, window, or tab
       const stream = await navigator.mediaDevices.getDisplayMedia({
-        video: {
-          cursor: "always"
-        },
+        video: { cursor: "always" },
         audio: false
       });
-      // Clear any previous streams
-      if (videoElement.srcObject) {
-        stopStream(videoElement.srcObject);
-      }
       videoElement.srcObject = stream;
-      videoElement.play();
-
-      // Listen for stream ending (user stops sharing)
       stream.getVideoTracks()[0].addEventListener('ended', () => {
         console.log('Screen sharing stopped');
         videoElement.srcObject = null;
       });
     } catch (err) {
-      console.error("Error in startCapture:", err);
+      console.error("Error: " + err);
       alert("An error occurred while trying to capture the screen: " + err.message);
     }
-  }
-
-  // Stop all tracks of a given stream
-  function stopStream(stream) {
-    stream.getTracks().forEach(track => track.stop());
   }
 
   captureBtn.addEventListener('click', () => {
@@ -57,10 +41,6 @@ import { createWorker } from 'https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/di
 
   // Enable crop selection mode
   cropBtn.addEventListener('click', () => {
-    if (!videoElement.srcObject) {
-      alert("Please start screen capture first.");
-      return;
-    }
     cropRegion = null;
     cropOverlay.style.display = 'none';
     resetCropBtn.style.display = 'none';
@@ -196,44 +176,5 @@ import { createWorker } from 'https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/di
       cropAnimationFrameID = null;
     }
     displayContainer.addEventListener('mousedown', startCrop);
-  });
-
-  // --- OCR Feature ---
-  const ocrBtn = document.getElementById('ocr-btn');
-  const ocrResultEl = document.getElementById('ocr-result');
-  let ocrWorkerPromise = null;
-  
-  function getOCRWorker() {
-    if (!ocrWorkerPromise) {
-      ocrWorkerPromise = (async () => {
-        const worker = createWorker({
-          logger: m => console.log(m)
-        });
-        await worker.load();
-        await worker.loadLanguage('eng');
-        await worker.initialize('eng');
-        return worker;
-      })();
-    }
-    return ocrWorkerPromise;
-  }
-  
-  ocrBtn.addEventListener('click', async () => {
-    if (!cropRegion) {
-      alert("Please select a crop region first.");
-      return;
-    }
-    ocrBtn.disabled = true;
-    ocrResultEl.textContent = "Processing OCR...";
-    try {
-      const worker = await getOCRWorker();
-      const { data: { text } } = await worker.recognize(croppedCanvas);
-      ocrResultEl.textContent = text;
-    } catch (error) {
-      console.error("OCR Error:", error);
-      ocrResultEl.textContent = "An error occurred during OCR.";
-    } finally {
-      ocrBtn.disabled = false;
-    }
   });
 })();
