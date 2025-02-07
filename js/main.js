@@ -1,6 +1,13 @@
 import { init as initCapture, getCroppedCanvas } from "./capture.js";
 import { initOCR } from "./ocr.js";
-import { initSkillEvents, addSkillReading, archiveTodayData, renderJournalDataUI, autoArchiveAll } from "./skill.js";
+import {
+  initSkillEvents,
+  addSkillReading,
+  archiveTodayDataAll,
+  archiveSelectedSkillData,
+  renderJournalDataUI,
+  autoArchiveAll
+} from "./skill.js";
 
 window.addEventListener("DOMContentLoaded", () => {
   // Grab necessary DOM elements
@@ -22,6 +29,7 @@ window.addEventListener("DOMContentLoaded", () => {
   
   // Archive buttons and modal elements
   const archiveBtn = document.getElementById("archive-btn");
+  const archiveSkillBtn = document.getElementById("archive-skill-btn");
   const viewJournalBtn = document.getElementById("view-journal-btn");
   const journalModal = document.getElementById("journal-modal");
   const journalEntries = document.getElementById("journal-entries");
@@ -69,9 +77,14 @@ window.addEventListener("DOMContentLoaded", () => {
   setInterval(updateCountdown, 1000);
   updateCountdown();
 
-  // Archive Today's Data button event
+  // Archive Buttons events
+  // Archive All Skills
   archiveBtn.addEventListener("click", () => {
-    archiveTodayData(expRateDiv, dailyExpDiv, ocrResultsContainer);
+    archiveTodayDataAll(expRateDiv, dailyExpDiv, ocrResultsContainer);
+  });
+  // Archive only the selected skill
+  archiveSkillBtn.addEventListener("click", () => {
+    archiveSelectedSkillData(expRateDiv, dailyExpDiv, ocrResultsContainer);
   });
 
   // View Archived Journal button event - open modal and render journal entries

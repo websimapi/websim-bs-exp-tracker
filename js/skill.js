@@ -45,7 +45,7 @@ function initSkillEvents({ skillSelect, resetExpBtn, clearOcrBtn, ocrResultsCont
     if (confirm(`Are you sure you want to clear the OCR list for ${currentSkill}? This cannot be undone.`)) {
       skillData[currentSkill] = [];
       saveSkillData();
-      renderSkillDataUI(document.getElementById("ocr-results-container"));
+      renderSkillDataUI(ocrResultsContainer);
       updateExpRate(expRateDiv);
       updateDailyExp(dailyExpDiv);
     }
@@ -154,6 +154,7 @@ function updateDailyExp(dailyExpDiv) {
 
 function renderSkillDataUI(ocrResultsContainer) {
   ocrResultsContainer.innerHTML = "";
+  // Render in reverse order per skill group
   for (const skill in skillData) {
     const groupDiv = document.createElement("div");
     groupDiv.className = "skill-group";
@@ -214,7 +215,8 @@ function saveJournalData(data) {
   localStorage.setItem("journalData", JSON.stringify(data));
 }
 
-function archiveTodayData(expRateDiv, dailyExpDiv, ocrResultsContainer) {
+// Archive today's data for a selected skill only
+function archiveSelectedSkillData(expRateDiv, dailyExpDiv, ocrResultsContainer) {
   if (!currentSkill) {
     alert("Please select a skill to archive.");
     return;
@@ -225,7 +227,7 @@ function archiveTodayData(expRateDiv, dailyExpDiv, ocrResultsContainer) {
   const startOfDay = today.getTime();
   const todaysReadings = readings.filter(r => r.timestamp >= startOfDay);
   if (todaysReadings.length === 0) {
-    alert("No readings for today to archive.");
+    alert("No readings for today to archive for " + currentSkill + ".");
     return;
   }
   const firstVal = todaysReadings[0].value;
@@ -238,7 +240,7 @@ function archiveTodayData(expRateDiv, dailyExpDiv, ocrResultsContainer) {
   }
   const alreadyArchived = journalData[currentSkill].find(entry => entry.date === dateStr);
   if (alreadyArchived) {
-    alert("Today's data has already been archived for this skill.");
+    alert("Today's data has already been archived for the selected skill.");
     return;
   }
   const journalEntry = {
@@ -249,13 +251,54 @@ function archiveTodayData(expRateDiv, dailyExpDiv, ocrResultsContainer) {
   };
   journalData[currentSkill].push(journalEntry);
   saveJournalData(journalData);
-  // Remove archived readings from active data (keep only readings before today)
+  // Remove archived readings from active data for the selected skill (keep only readings before today)
   skillData[currentSkill] = readings.filter(r => r.timestamp < startOfDay);
   saveSkillData();
-  renderSkillDataUI(ocrResultsContainer);
+  renderSkillDataUI(document.getElementById("ocr-results-container"));
   updateExpRate(expRateDiv);
   updateDailyExp(dailyExpDiv);
-  alert("Today's data archived successfully.");
+  alert("Today's data archived successfully for " + currentSkill + ".");
+}
+
+// Archive today's data for all skills
+function archiveTodayDataAll(expRateDiv, dailyExpDiv, ocrResultsContainer) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const startOfDay = today.getTime();
+  let journalData = loadJournalData();
+  let updated = false;
+  for (const skill in skillData) {
+    if (!skillData[skill] || skillData[skill].length === 0) continue;
+    const todaysReadings = skillData[skill].filter(r => r.timestamp >= startOfDay);
+    if (todaysReadings.length === 0) continue;
+    const firstVal = todaysReadings[0].value;
+    const lastVal = todaysReadings[todaysReadings.length - 1].value;
+    const dailyExp = lastVal - firstVal;
+    const dateStr = new Date().toISOString().split('T')[0];
+    if (!journalData[skill]) journalData[skill] = [];
+    const exists = journalData[skill].find(e => e.date === dateStr);
+    if (exists) continue;
+    const journalEntry = {
+      date: dateStr,
+      skill: skill,
+      readings: todaysReadings,
+      dailyExp: dailyExp
+    };
+    journalData[skill].push(journalEntry);
+    // Remove archived readings
+    skillData[skill] = skillData[skill].filter(r => r.timestamp < startOfDay);
+    updated = true;
+  }
+  if (updated) {
+    saveJournalData(journalData);
+    saveSkillData();
+    renderSkillDataUI(document.getElementById("ocr-results-container"));
+    updateExpRate(document.getElementById("exp-rate"));
+    updateDailyExp(document.getElementById("daily-exp"));
+    alert("Today's data archived successfully for all skills.");
+  } else {
+    alert("No readings available to archive for today.");
+  }
 }
 
 function renderJournalDataUI(archiveContainer) {
@@ -341,9 +384,16 @@ function autoArchiveAll(expRateDiv, dailyExpDiv, ocrResultsContainer) {
     saveJournalData(journalData);
     saveSkillData();
     renderSkillDataUI(document.getElementById("ocr-results-container"));
-    updateExpRate(expRateDiv);
-    updateDailyExp(dailyExpDiv);
+    updateExpRate(document.getElementById("exp-rate"));
+    updateDailyExp(document.getElementById("daily-exp"));
   }
 }
 
-export { initSkillEvents, addSkillReading, archiveTodayData, renderJournalDataUI, autoArchiveAll };
+export {
+  initSkillEvents,
+  addSkillReading,
+  archiveTodayDataAll,
+  archiveSelectedSkillData,
+  renderJournalDataUI,
+  autoArchiveAll
+};
