@@ -263,6 +263,7 @@ function renderJournalDataUI(archiveContainer) {
     const skillContainer = document.createElement("div");
     skillContainer.className = "journal-skill-group";
     const skillHeader = document.createElement("h3");
+    // Include timestamp on archive header
     skillHeader.textContent = "Skill: " + skill;
     skillContainer.appendChild(skillHeader);
     entries.sort((a, b) => {
