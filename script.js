@@ -10,7 +10,6 @@
   const cropOverlay = document.getElementById('crop-overlay');
   const croppedCanvas = document.getElementById('cropped-canvas');
   const croppedCtx = croppedCanvas.getContext('2d');
-  const labelListBtn = document.getElementById('label-list-btn');
   const skillSelect = document.getElementById('skill-select');
 
   let cropRegion = null; // { x, y, w, h } relative to the video element's displayed area
@@ -18,10 +17,16 @@
   let startX = 0;
   let startY = 0;
   let cropAnimationFrameID = null;
-
-  // Global variables for auto OCR detection
+  
+  // Global variable for auto OCR detection and current skill label
   let previousOCRFrame = '';
   let ocrInProgress = false;
+  let currentSkill = '';
+
+  // Event listener for skill selection - sets the current label
+  skillSelect.addEventListener('change', (e) => {
+    currentSkill = e.target.value;
+  });
 
   // Start screen capture
   async function startCapture() {
@@ -207,12 +212,16 @@
         const { data: { text } } = await Tesseract.recognize(croppedCanvas, 'eng', {
           logger: m => console.log(m)
         });
+        // Remove everything except for numbers from the result
         const numbersOnly = text.replace(/[^0-9]/g, '').trim();
         if (numbersOnly) {
           const li = document.createElement('li');
-          li.textContent = numbersOnly;
+          const now = new Date();
+          li.textContent = (currentSkill ? currentSkill + ": " : "") + numbersOnly + " (" + now.toLocaleTimeString() + ")";
           li.dataset.value = numbersOnly;
+          li.dataset.timestamp = now.getTime();
           document.getElementById('ocr-result-list').appendChild(li);
+          updateExpRate();
         }
       } catch (err) {
         console.error('OCR error:', err);
@@ -222,23 +231,30 @@
     }
   }
 
-  // Check for frame changes every second
-  setInterval(autoOCRCheck, 1000);
-
-  // Label the current OCR list with the selected skill name
-  labelListBtn.addEventListener('click', () => {
-    const selectedSkill = skillSelect.value;
-    if (!selectedSkill) {
-      alert("Please select a skill label.");
+  // Calculate and update experience gain rate based on OCR results
+  function updateExpRate() {
+    const liElements = document.querySelectorAll('#ocr-result-list li');
+    if (liElements.length < 2) {
+      document.getElementById("exp-rate").textContent = "Exp Rate: N/A";
       return;
     }
-    const ocrList = document.getElementById('ocr-result-list');
-    const listItems = ocrList.getElementsByTagName('li');
-    for (const li of listItems) {
-      // Use the stored original number value to avoid duplicating labels
-      const originalValue = li.dataset.value || li.textContent;
-      li.textContent = `${selectedSkill}: ${originalValue}`;
-      li.dataset.labeled = "true";
+    const first = liElements[0];
+    const last = liElements[liElements.length - 1];
+    const firstValue = parseFloat(first.dataset.value);
+    const lastValue = parseFloat(last.dataset.value);
+    const firstTimestamp = parseInt(first.dataset.timestamp);
+    const lastTimestamp = parseInt(last.dataset.timestamp);
+    const deltaExp = lastValue - firstValue;
+    const deltaTimeMs = lastTimestamp - firstTimestamp;
+    if (deltaTimeMs <= 0) {
+      document.getElementById("exp-rate").textContent = "Exp Rate: N/A";
+      return;
     }
-  });
+    const deltaHours = deltaTimeMs / (3600 * 1000);
+    const expRate = deltaExp / deltaHours;
+    document.getElementById("exp-rate").textContent = "Exp Rate: " + expRate.toFixed(2) + " xp/h";
+  }
+
+  // Check for frame changes every second
+  setInterval(autoOCRCheck, 1000);
 })();

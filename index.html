@@ -2,7 +2,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Live Window/Tab Capture with Cropping, Auto OCR & Labeling</title>
+    <title>Live Window/Tab Capture with Cropping, Auto OCR & EXP Rate</title>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
@@ -14,7 +14,7 @@
         <button id="capture-btn">Select Screen To Capture</button>
         <button id="crop-btn">Select Crop Region</button>
         <button id="reset-crop-btn" style="display:none;">Reset Crop</button>
-        <!-- New Labeling Controls -->
+        <!-- Labeling Controls: selecting a skill sets the current label for new OCR readings -->
         <div id="labeling-controls">
           <label for="skill-select">Select Skill: </label>
           <select id="skill-select">
@@ -38,7 +38,6 @@
             <option value="Watchperson">Watchperson</option>
             <option value="Leatherworker">Leatherworker</option>
           </select>
-          <button id="label-list-btn">Label OCR List</button>
         </div>
       </section>
       <section id="display-container">
@@ -52,6 +51,7 @@
         <canvas id="cropped-canvas"></canvas>
         <h2>OCR Numbers</h2>
         <ul id="ocr-result-list"></ul>
+        <div id="exp-rate">Exp Rate: N/A</div>
       </section>
     </main>
     <footer>
