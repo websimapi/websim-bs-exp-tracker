@@ -326,7 +326,7 @@
     dailyExpDiv.textContent = "Daily EXP (" + currentSkill + "): " + deltaExp.toFixed(2);
   }
 
-  // Render the OCR readings grouped by skill from Local Storage in reverse order (latest first)
+  // Render the OCR readings grouped by skill from Local Storage in reverse order
   function renderSkillDataUI() {
     const container = document.getElementById("ocr-results-container");
     container.innerHTML = "";
@@ -342,7 +342,7 @@
         groupDiv.appendChild(p);
       } else {
         const ul = document.createElement("ul");
-        // Create a reversed copy to display the latest OCR readings first
+        // Render the list in reverse order without changing the math/calculations
         const reversedReadings = skillData[skill].slice().reverse();
         reversedReadings.forEach(reading => {
           const li = document.createElement("li");
