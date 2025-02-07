@@ -193,7 +193,9 @@
       const { data: { text } } = await Tesseract.recognize(croppedCanvas, 'eng', {
         logger: m => console.log(m)
       });
-      ocrResultDiv.textContent = text.trim() || 'No text found.';
+      // Remove everything except for numbers from the OCR text
+      const numbersOnly = text.replace(/[^0-9]/g, '');
+      ocrResultDiv.textContent = numbersOnly.trim() || 'No numbers found.';
     } catch (err) {
       console.error(err);
       ocrResultDiv.textContent = 'Error performing OCR: ' + (err.message || err);
