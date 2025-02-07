@@ -46,7 +46,7 @@ function initSkillEvents({ skillSelect, resetExpBtn, clearOcrBtn, ocrResultsCont
     if (confirm(`Are you sure you want to clear the OCR list for ${currentSkill}? This cannot be undone.`)) {
       skillData[currentSkill] = [];
       saveSkillData();
-      renderSkillDataUI(document.getElementById("ocr-results-container"));
+      renderSkillDataUI(ocrResultsContainer);
       updateExpRate(expRateDiv);
       updateTotalExp(totalExpDiv);
     }
@@ -282,7 +282,7 @@ function renderJournalDataUI(archiveContainer) {
         <details class="journal-entry-details">
           <summary>Readings</summary>
           <ul>
-            ${entry.readings.map(r => `<li>${r.value} (${new Date(r.timestamp).toLocaleTimeString()})</li>`).join('')}
+            ${entry.readings?.map(r => `<li>${r.value} (${new Date(r.timestamp).toLocaleTimeString()})</li>`).join('') || '<li>No readings</li>'}
           </ul>
         </details>
       `;
@@ -291,7 +291,8 @@ function renderJournalDataUI(archiveContainer) {
         e.stopPropagation();
         if (confirm("Are you sure you want to delete this archive entry?")) {
           let jData = loadJournalData();
-          jData[skill] = jData[skill].filter(en => en.date !== entry.date || en.readings.toString() !== entry.readings.toString());
+          // Use optional chaining to avoid errors if readings is undefined
+          jData[skill] = jData[skill].filter(en => en.date !== entry.date || (en.readings?.toString() !== entry.readings?.toString()));
           saveJournalData(jData);
           renderJournalDataUI(archiveContainer);
         }
