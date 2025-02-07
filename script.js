@@ -244,7 +244,8 @@
     }
     croppedCtx.putImageData(imageData, 0, 0);
 
-    // Perform OCR on the cropped feed every ocrCooldown interval
+    // Perform OCR on the cropped feed every ocrCooldown interval,
+    // after preprocessing the image to enhance contrast and clarity.
     if (croppedCanvas.width > 0 && (Date.now() - lastOCRTime > ocrCooldown) && !isOCRProcessing) {
       performOCR();
       lastOCRTime = Date.now();
@@ -282,19 +283,55 @@
     document.getElementById('color-hex-value').textContent = hexColor;
   });
 
-  // Auto OCR function using Tesseract.js on cropped feed
+  // Auto OCR function using Tesseract.js on cropped feed after preprocessing for improved accuracy
   async function performOCR() {
     isOCRProcessing = true;
     const ocrTextEl = document.getElementById('ocr-text');
     ocrTextEl.textContent = "Processing OCR...";
+    
+    // Preprocess the cropped canvas to enhance contrast (grayscale & binary thresholding)
+    const preprocessedCanvas = preprocessCanvasForOCR(croppedCanvas);
+    
     try {
-      const { data: { text } } = await ocrWorker.recognize(croppedCanvas);
+      const { data: { text } } = await ocrWorker.recognize(preprocessedCanvas);
       ocrTextEl.textContent = text.trim() || "No text recognized.";
     } catch (err) {
       console.error("OCR error:", err);
       ocrTextEl.textContent = "OCR Error: " + err;
     }
     isOCRProcessing = false;
+  }
+
+  // Function to preprocess the canvas image for improved OCR accuracy
+  function preprocessCanvasForOCR(sourceCanvas) {
+    const width = sourceCanvas.width;
+    const height = sourceCanvas.height;
+    const offCanvas = document.createElement('canvas');
+    offCanvas.width = width;
+    offCanvas.height = height;
+    const offCtx = offCanvas.getContext('2d');
+    
+    // Get the image data from the source (cropped) canvas
+    const sourceCtx = sourceCanvas.getContext('2d');
+    const imageData = sourceCtx.getImageData(0, 0, width, height);
+    const data = imageData.data;
+    const threshold = 128; // Threshold for binarization
+
+    // Convert each pixel to grayscale and apply thresholding for clear contrast
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i];
+      const g = data[i + 1];
+      const b = data[i + 2];
+      const gray = 0.299 * r + 0.587 * g + 0.114 * b;
+      const binaryColor = gray < threshold ? 0 : 255;
+      data[i] = binaryColor;
+      data[i + 1] = binaryColor;
+      data[i + 2] = binaryColor;
+      data[i + 3] = 255;
+    }
+    
+    offCtx.putImageData(imageData, 0, 0);
+    return offCanvas;
   }
 
   // Helper functions to convert RGB values to Hex
