@@ -45,4 +45,20 @@ window.addEventListener("DOMContentLoaded", () => {
   initOCR(getCroppedCanvas, (newNumber) => {
     addSkillReading(newNumber, expRateDiv, dailyExpDiv, ocrResultsContainer);
   });
+  
+  // Countdown Timer for reset at 00:00
+  function updateCountdown() {
+    const countdownEl = document.getElementById("time-till-reset");
+    if (!countdownEl) return;
+    const now = new Date();
+    const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0);
+    const diff = tomorrow - now; // in milliseconds
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+    countdownEl.textContent = `Time till reset: ${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+  }
+  
+  setInterval(updateCountdown, 1000);
+  updateCountdown();
 });
