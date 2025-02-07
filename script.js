@@ -1,4 +1,5 @@
 'use strict';
+import { createWorker } from 'https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.esm.js';
 
 // Encapsulate logic in an IIFE
 (() => {
@@ -176,5 +177,44 @@
       cropAnimationFrameID = null;
     }
     displayContainer.addEventListener('mousedown', startCrop);
+  });
+
+  // --- OCR Feature ---
+  const ocrBtn = document.getElementById('ocr-btn');
+  const ocrResultEl = document.getElementById('ocr-result');
+  let ocrWorkerPromise = null;
+  
+  function getOCRWorker() {
+    if (!ocrWorkerPromise) {
+      ocrWorkerPromise = (async () => {
+        const worker = createWorker({
+          logger: m => console.log(m)
+        });
+        await worker.load();
+        await worker.loadLanguage('eng');
+        await worker.initialize('eng');
+        return worker;
+      })();
+    }
+    return ocrWorkerPromise;
+  }
+  
+  ocrBtn.addEventListener('click', async () => {
+    if (!cropRegion) {
+      alert("Please select a crop region first.");
+      return;
+    }
+    ocrBtn.disabled = true;
+    ocrResultEl.textContent = "Processing OCR...";
+    try {
+      const worker = await getOCRWorker();
+      const { data: { text } } = await worker.recognize(croppedCanvas);
+      ocrResultEl.textContent = text;
+    } catch (error) {
+      console.error("OCR Error:", error);
+      ocrResultEl.textContent = "An error occurred during OCR.";
+    } finally {
+      ocrBtn.disabled = false;
+    }
   });
 })();
