@@ -11,14 +11,15 @@
   const croppedCanvas = document.getElementById('cropped-canvas');
   const croppedCtx = croppedCanvas.getContext('2d');
 
-  const ocrBtn = document.getElementById('ocr-btn');
-  const ocrResultDiv = document.getElementById('ocr-result');
-
   let cropRegion = null; // { x, y, w, h } relative to the video element's displayed area
   let isSelecting = false;
   let startX = 0;
   let startY = 0;
   let cropAnimationFrameID = null;
+
+  // Global variables for auto OCR detection
+  let previousOCRFrame = '';
+  let ocrInProgress = false;
 
   // Start screen capture
   async function startCapture() {
@@ -56,7 +57,7 @@
     if (!videoElement.srcObject) return;
     const containerRect = displayContainer.getBoundingClientRect();
     const videoRect = videoElement.getBoundingClientRect();
-    // Only allow selection if the click is within the video bounds
+    // Only allow selection if click is within the video bounds
     if (
       e.clientX < videoRect.left ||
       e.clientX > videoRect.right ||
@@ -178,30 +179,46 @@
       cancelAnimationFrame(cropAnimationFrameID);
       cropAnimationFrameID = null;
     }
+    // Also reset OCR detection data so it doesn't trigger on stale frames
+    previousOCRFrame = '';
     displayContainer.addEventListener('mousedown', startCrop);
   });
 
-  // Add OCR functionality for the cropped feed
-  ocrBtn.addEventListener('click', async () => {
+  // Auto-detect frame changes and perform OCR on the cropped feed.
+  async function autoOCRCheck() {
     if (!cropRegion) {
-      alert('No crop region selected. Please select a crop region to OCR.');
+      previousOCRFrame = '';
       return;
     }
-    ocrBtn.disabled = true;
-    ocrBtn.textContent = 'OCRing...';
+    let currentDataURL;
     try {
-      const { data: { text } } = await Tesseract.recognize(croppedCanvas, 'eng', {
-        logger: m => console.log(m)
-      });
-      // Remove everything except for numbers from the OCR text
-      const numbersOnly = text.replace(/[^0-9]/g, '');
-      ocrResultDiv.textContent = numbersOnly.trim() || 'No numbers found.';
-    } catch (err) {
-      console.error(err);
-      ocrResultDiv.textContent = 'Error performing OCR: ' + (err.message || err);
-    } finally {
-      ocrBtn.disabled = false;
-      ocrBtn.textContent = 'OCR Cropped Feed';
+      currentDataURL = croppedCanvas.toDataURL('image/png');
+    } catch (e) {
+      return;
     }
-  });
+    // Run OCR only if a new frame is detected and if not already processing OCR
+    if (currentDataURL !== previousOCRFrame && !ocrInProgress) {
+      previousOCRFrame = currentDataURL;
+      ocrInProgress = true;
+      console.log("New frame detected. Running OCR...");
+      try {
+        const { data: { text } } = await Tesseract.recognize(croppedCanvas, 'eng', {
+          logger: m => console.log(m)
+        });
+        const numbersOnly = text.replace(/[^0-9]/g, '').trim();
+        if (numbersOnly) {
+          const li = document.createElement('li');
+          li.textContent = numbersOnly;
+          document.getElementById('ocr-result-list').appendChild(li);
+        }
+      } catch (err) {
+        console.error('OCR error:', err);
+      } finally {
+        ocrInProgress = false;
+      }
+    }
+  }
+
+  // Check for frame changes every second
+  setInterval(autoOCRCheck, 1000);
 })();
