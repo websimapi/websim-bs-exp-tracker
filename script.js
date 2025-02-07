@@ -11,6 +11,9 @@
   const croppedCanvas = document.getElementById('cropped-canvas');
   const croppedCtx = croppedCanvas.getContext('2d');
 
+  const ocrBtn = document.getElementById('ocr-btn');
+  const ocrResultDiv = document.getElementById('ocr-result');
+
   let cropRegion = null; // { x, y, w, h } relative to the video element's displayed area
   let isSelecting = false;
   let startX = 0;
@@ -176,5 +179,27 @@
       cropAnimationFrameID = null;
     }
     displayContainer.addEventListener('mousedown', startCrop);
+  });
+
+  // Add OCR functionality for the cropped feed
+  ocrBtn.addEventListener('click', async () => {
+    if (!cropRegion) {
+      alert('No crop region selected. Please select a crop region to OCR.');
+      return;
+    }
+    ocrBtn.disabled = true;
+    ocrBtn.textContent = 'OCRing...';
+    try {
+      const { data: { text } } = await Tesseract.recognize(croppedCanvas, 'eng', {
+        logger: m => console.log(m)
+      });
+      ocrResultDiv.textContent = text.trim() || 'No text found.';
+    } catch (err) {
+      console.error(err);
+      ocrResultDiv.textContent = 'Error performing OCR: ' + (err.message || err);
+    } finally {
+      ocrBtn.disabled = false;
+      ocrBtn.textContent = 'OCR Cropped Feed';
+    }
   });
 })();

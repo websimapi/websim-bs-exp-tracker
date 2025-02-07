@@ -92,3 +92,36 @@ main {
   border-radius: 4px;
   max-width: 100%;
 }
+
+/* OCR Button and Result styling */
+#ocr-btn {
+  background-color: #28a745;
+  border: none;
+  color: white;
+  padding: 12px 24px;
+  font-size: 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+  margin: 20px auto;
+  display: block;
+}
+
+#ocr-btn:hover {
+  background-color: #1e7e34;
+}
+
+#ocr-result {
+  margin-top: 20px;
+  text-align: center;
+  background: #fff;
+  padding: 10px;
+  border: 2px solid #ccc;
+  border-radius: 4px;
+  min-height: 50px;
+  max-width: 90%;
+  margin-left: auto;
+  margin-right: auto;
+  font-family: monospace;
+  white-space: pre-wrap;
+}
