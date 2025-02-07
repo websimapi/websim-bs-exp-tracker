@@ -2,10 +2,18 @@
 
 // Encapsulate logic in an IIFE
 (() => {
-  // Override Tesseract workerPath to use a stable jsDelivr URL (resolving the importScripts error)
-  if (typeof Tesseract !== 'undefined') {
-    Tesseract.workerPath = 'https://cdn.jsdelivr.net/npm/tesseract.js@2.1.5/dist/worker.min.js';
-  }
+  // Initialize OCR Worker using Tesseract.createWorker
+  let ocrWorker;
+  (async function initOCR() {
+    ocrWorker = Tesseract.createWorker({
+      logger: m => console.log(m),
+      workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@2.1.5/dist/worker.min.js'
+    });
+    await ocrWorker.load();
+    await ocrWorker.loadLanguage('eng');
+    await ocrWorker.initialize('eng');
+    console.log('OCR Worker initialized');
+  })();
 
   const captureBtn = document.getElementById('capture-btn');
   const videoElement = document.getElementById('capture-video');
@@ -209,7 +217,6 @@
       { r: 0x92, g: 0x8e, b: 0x26 }, // #928e26
       { r: 0x6e, g: 0x6e, b: 0x52 }, // #6e6e52
       { r: 0x21, g: 0x23, b: 0x21 }, // #212321
-      // New colors to remove
       { r: 0x5a, g: 0x5b, b: 0x4e }, // #5a5b4e
       { r: 0x44, g: 0x58, b: 0x41 }, // #445841
       { r: 0x4b, g: 0x59, b: 0x49 }, // #4b5949
@@ -276,25 +283,18 @@
   });
 
   // Auto OCR function using Tesseract.js on cropped feed
-  function performOCR() {
+  async function performOCR() {
     isOCRProcessing = true;
     const ocrTextEl = document.getElementById('ocr-text');
     ocrTextEl.textContent = "Processing OCR...";
-    // Recognize text from the cropped canvas
-    Tesseract.recognize(croppedCanvas, 'eng', {
-      logger: m => console.log(m)
-    })
-      .then(result => {
-        const text = result.data.text.trim();
-        ocrTextEl.textContent = text || "No text recognized.";
-      })
-      .catch(err => {
-        console.error("OCR error:", err);
-        ocrTextEl.textContent = "OCR Error: " + err;
-      })
-      .finally(() => {
-        isOCRProcessing = false;
-      });
+    try {
+      const { data: { text } } = await ocrWorker.recognize(croppedCanvas);
+      ocrTextEl.textContent = text.trim() || "No text recognized.";
+    } catch (err) {
+      console.error("OCR error:", err);
+      ocrTextEl.textContent = "OCR Error: " + err;
+    }
+    isOCRProcessing = false;
   }
 
   // Helper functions to convert RGB values to Hex
