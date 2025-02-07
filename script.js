@@ -11,7 +11,7 @@
   const croppedCanvas = document.getElementById('cropped-canvas');
   const croppedCtx = croppedCanvas.getContext('2d');
   const skillSelect = document.getElementById('skill-select');
-  const resetExpBtn = document.getElementById('reset-exp-btn'); // New button for resetting EXP rate
+  const resetExpBtn = document.getElementById('reset-exp-btn'); // For resetting EXP rate
   
   let cropRegion = null; // { x, y, w, h } relative to the video element's displayed area
   let isSelecting = false;
@@ -184,9 +184,15 @@
       cropAnimationFrameID = null;
       return;
     }
-    const videoRect = videoElement.getBoundingClientRect();
-    const scaleX = videoElement.videoWidth / videoRect.width;
-    const scaleY = videoElement.videoHeight / videoRect.height;
+    // Use offsetWidth/offsetHeight instead of getBoundingClientRect to avoid potential scale issues.
+    const videoDisplayWidth = videoElement.offsetWidth;
+    const videoDisplayHeight = videoElement.offsetHeight;
+    if (videoDisplayWidth === 0 || videoDisplayHeight === 0) {
+      cropAnimationFrameID = requestAnimationFrame(updateCroppedFeed);
+      return;
+    }
+    const scaleX = videoElement.videoWidth / videoDisplayWidth;
+    const scaleY = videoElement.videoHeight / videoDisplayHeight;
     const videoCropX = cropRegion.x * scaleX;
     const videoCropY = cropRegion.y * scaleY;
     const videoCropWidth = cropRegion.w * scaleX;
@@ -243,7 +249,7 @@
         const { data: { text } } = await Tesseract.recognize(croppedCanvas, 'eng', {
           logger: m => console.log(m)
         });
-        // Remove everything except numbers and optional dot
+        // Remove everything except numbers and an optional dot
         const numbersOnly = text.replace(/[^0-9.]/g, '').trim();
         if (numbersOnly) {
           const newNumber = parseFloat(numbersOnly);
@@ -347,7 +353,7 @@
         groupDiv.appendChild(p);
       } else {
         const ul = document.createElement("ul");
-        // Render the list in reverse order without changing the math/calculations
+        // Render the list in reverse order without changing the calculations
         const reversedReadings = skillData[skill].slice().reverse();
         reversedReadings.forEach(reading => {
           const li = document.createElement("li");
