@@ -12,7 +12,8 @@
   const croppedCtx = croppedCanvas.getContext('2d');
   const skillSelect = document.getElementById('skill-select');
   const resetExpBtn = document.getElementById('reset-exp-btn'); // Reset Exp Rate button
-  const resetDailyExpBtn = document.getElementById('reset-daily-exp-btn'); // New button for resetting Daily EXP
+  const resetDailyExpBtn = document.getElementById('reset-daily-exp-btn'); // Reset Daily EXP button
+  const toggleOCRBtn = document.getElementById('toggle-ocr-btn'); // Toggle OCR on/off
 
   let cropRegion = null; // { x, y, w, h } relative to the video element's displayed area
   let isSelecting = false;
@@ -25,15 +26,34 @@
   let ocrInProgress = false;
   let currentSkill = '';
 
+  // OCR active flag (default true) stored in localStorage
+  let ocrActive = localStorage.getItem('ocrActive');
+  ocrActive = ocrActive === null ? true : (ocrActive === 'true');
+
+  // Update OCR toggle button label based on state
+  function updateOCRButtonLabel() {
+    toggleOCRBtn.textContent = ocrActive ? "OCR: On" : "OCR: Off";
+  }
+  updateOCRButtonLabel();
+
   // Load data from Local Storage
   let skillData = loadSkillData();
   let expResetData = loadExpResetData();
   let dailyResetData = loadDailyResetData();
   cropRegion = loadCropRegion(); // Load saved cropRegion, if any
 
+  // Remember last selected skill from localStorage
+  const storedSkill = localStorage.getItem('currentSkill');
+  if (storedSkill) {
+    currentSkill = storedSkill;
+    skillSelect.value = storedSkill;
+  }
+
   // When a skill is selected, update current label and UI
   skillSelect.addEventListener('change', (e) => {
     currentSkill = e.target.value;
+    // Store the current selected skill in localStorage
+    localStorage.setItem('currentSkill', currentSkill);
     renderSkillDataUI();
     updateExpRate();
     updateDailyExp();
@@ -71,6 +91,13 @@
     dailyResetData[currentSkill] = { baseline: lastReading.value, timestamp: lastReading.timestamp };
     saveDailyResetData();
     updateDailyExp();
+  });
+
+  // Toggle OCR on/off and store state in localStorage
+  toggleOCRBtn.addEventListener('click', () => {
+    ocrActive = !ocrActive;
+    localStorage.setItem('ocrActive', ocrActive);
+    updateOCRButtonLabel();
   });
 
   // Start screen capture
@@ -237,6 +264,7 @@
 
   // Auto-detect frame changes and perform OCR on the cropped feed.
   async function autoOCRCheck() {
+    if (!ocrActive) return;
     if (!cropRegion || !videoElement.srcObject) {
       croppedCtx.clearRect(0, 0, croppedCanvas.width, croppedCanvas.height);
       return;
@@ -443,8 +471,7 @@
         // If valid, display the crop overlay
         if (region && region.x != null && region.y != null && region.w && region.h) {
           cropOverlay.style.display = 'block';
-          // To position the overlay correctly, we need to wait for video element positioning.
-          // This is a best effort restoration.
+          // Best effort restoration of crop overlay position and size
           cropOverlay.style.left = region.x + 'px';
           cropOverlay.style.top = region.y + 'px';
           cropOverlay.style.width = region.w + 'px';
