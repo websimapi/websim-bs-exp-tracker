@@ -17,9 +17,11 @@ async function autoOCRCheck(canvas, onNewResult) {
   console.log("New frame detected. Running OCR...");
   try {
     const { data: { text } } = await Tesseract.recognize(canvas, "eng", {
+      workerOptions: {
+        corePath: "https://unpkg.com/tesseract.js-core@2.2.0/tesseract-core.wasm.js"
+      },
       logger: (m) => console.log(m)
     });
-    // Remove everything except numbers and a dot
     const numbersOnly = text.replace(/[^0-9.]/g, "").trim();
     if (numbersOnly) {
       const newNumber = parseFloat(numbersOnly);

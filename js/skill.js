@@ -37,10 +37,13 @@ function initSkillEvents({ skillSelect, resetExpBtn, clearOcrBtn, ocrResultsCont
     updateTotalExp(totalExpDiv);
   });
 
-  // Updated Clear OCR List button to clear ALL OCR readings rather than just the selected skill.
   clearOcrBtn.addEventListener("click", () => {
-    if (confirm("Are you sure you want to clear ALL OCR readings? This cannot be undone.")) {
-      skillData = {};
+    if (!currentSkill) {
+      alert("Please select a skill first to clear OCR list!");
+      return;
+    }
+    if (confirm(`Are you sure you want to clear the OCR list for ${currentSkill}? This cannot be undone.`)) {
+      skillData[currentSkill] = [];
       saveSkillData();
       renderSkillDataUI(ocrResultsContainer);
       updateExpRate(expRateDiv);
@@ -224,9 +227,8 @@ function archiveData(expRateDiv, totalExpDiv, ocrResultsContainer) {
   const firstVal = readings[0].value;
   const lastVal = readings[readings.length - 1].value;
   const totalExp = lastVal - firstVal;
-  const dateObj = new Date();
-  const dateStr = dateObj.toISOString().split('T')[0];
-  const archiveTime = dateObj.toLocaleTimeString();
+  const dateStr = new Date().toISOString().split('T')[0];
+  const archiveTime = new Date().toLocaleTimeString();
   let journalData = loadJournalData();
   if (!journalData[currentSkill]) {
     journalData[currentSkill] = [];
@@ -243,7 +245,7 @@ function archiveData(expRateDiv, totalExpDiv, ocrResultsContainer) {
   // Clear active readings for this skill after archiving
   skillData[currentSkill] = [];
   saveSkillData();
-  renderSkillDataUI(document.getElementById("ocr-results-container"));
+  renderSkillDataUI(ocrResultsContainer);
   updateExpRate(expRateDiv);
   updateTotalExp(totalExpDiv);
   alert("Data archived successfully.");
@@ -260,7 +262,6 @@ function renderJournalDataUI(archiveContainer) {
     const skillContainer = document.createElement("div");
     skillContainer.className = "journal-skill-group";
     const skillHeader = document.createElement("h3");
-    // Include timestamp on archive header
     skillHeader.textContent = "Skill: " + skill;
     skillContainer.appendChild(skillHeader);
     entries.sort((a, b) => {
