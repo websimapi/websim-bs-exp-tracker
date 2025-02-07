@@ -28,8 +28,15 @@
   let skillData = loadSkillData();
   // Load exp reset data from Local Storage (for resetting xp/hr calculations)
   let expResetData = loadExpResetData();
-  // Load persisted cropRegion from Local Storage
-  cropRegion = loadCropRegion();
+  // Load stored crop region from localStorage, if any
+  const storedCropRegion = localStorage.getItem("cropRegion");
+  if (storedCropRegion) {
+    try {
+      cropRegion = JSON.parse(storedCropRegion);
+    } catch (e) {
+      console.error("Error parsing stored crop region:", e);
+    }
+  }
 
   // When the user selects a skill, update the current label and UI
   skillSelect.addEventListener('change', (e) => {
@@ -64,8 +71,16 @@
         audio: false
       });
       videoElement.srcObject = stream;
-      // Ensure the video starts playing (this helps trigger loadedmetadata)
-      await videoElement.play();
+      // When video metadata is loaded, if a crop region was saved, display the crop overlay and start the cropped feed update.
+      videoElement.onloadedmetadata = () => {
+        if (cropRegion) {
+          positionCropOverlay();
+          resetCropBtn.style.display = 'inline-block';
+          if (!cropAnimationFrameID) {
+            updateCroppedFeed();
+          }
+        }
+      };
       stream.getVideoTracks()[0].addEventListener('ended', () => {
         console.log('Screen sharing stopped');
         videoElement.srcObject = null;
@@ -83,8 +98,9 @@
   // Enable crop selection mode
   cropBtn.addEventListener('click', () => {
     cropRegion = null;
-    hideCropOverlay();
+    cropOverlay.style.display = 'none';
     resetCropBtn.style.display = 'none';
+    localStorage.removeItem("cropRegion");
     displayContainer.addEventListener('mousedown', startCrop);
     displayContainer.style.cursor = 'crosshair';
   });
@@ -163,20 +179,34 @@
     // Only register a legitimate crop if the area is large enough
     if (rectWidth > 10 && rectHeight > 10) {
       cropRegion = { x: rectLeft, y: rectTop, w: rectWidth, h: rectHeight };
-      // Persist cropRegion details to Local Storage
+      // Save crop region to localStorage so it persists after reloads.
       localStorage.setItem("cropRegion", JSON.stringify(cropRegion));
       resetCropBtn.style.display = 'inline-block';
       if (!cropAnimationFrameID) {
         updateCroppedFeed();
       }
     } else {
-      hideCropOverlay();
+      cropOverlay.style.display = 'none';
     }
     isSelecting = false;
     document.removeEventListener('mousemove', onCropMove);
     document.removeEventListener('mouseup', endCrop);
     displayContainer.addEventListener('mousedown', startCrop);
     displayContainer.style.cursor = 'default';
+  }
+
+  // Positions the crop overlay based on stored cropRegion and current video position
+  function positionCropOverlay() {
+    if (!cropRegion) return;
+    const containerRect = displayContainer.getBoundingClientRect();
+    const videoRect = videoElement.getBoundingClientRect();
+    const videoOffsetX = videoRect.left - containerRect.left;
+    const videoOffsetY = videoRect.top - containerRect.top;
+    cropOverlay.style.left = (videoOffsetX + cropRegion.x) + 'px';
+    cropOverlay.style.top = (videoOffsetY + cropRegion.y) + 'px';
+    cropOverlay.style.width = cropRegion.w + 'px';
+    cropOverlay.style.height = cropRegion.h + 'px';
+    cropOverlay.style.display = 'block';
   }
 
   // Continuously update the cropped feed canvas
@@ -187,11 +217,6 @@
       return;
     }
     const videoRect = videoElement.getBoundingClientRect();
-    // Ensure video dimensions are available
-    if (videoRect.width === 0 || videoRect.height === 0 || !videoElement.videoWidth || !videoElement.videoHeight) {
-      cropAnimationFrameID = requestAnimationFrame(updateCroppedFeed);
-      return;
-    }
     const scaleX = videoElement.videoWidth / videoRect.width;
     const scaleY = videoElement.videoHeight / videoRect.height;
     const videoCropX = cropRegion.x * scaleX;
@@ -217,7 +242,7 @@
   // Reset crop selection on user request
   resetCropBtn.addEventListener('click', () => {
     cropRegion = null;
-    hideCropOverlay();
+    cropOverlay.style.display = 'none';
     resetCropBtn.style.display = 'none';
     localStorage.removeItem("cropRegion");
     if (cropAnimationFrameID) {
@@ -403,51 +428,10 @@
     localStorage.setItem("expResetData", JSON.stringify(expResetData));
   }
 
-  // Load cropRegion data from local storage
-  function loadCropRegion() {
-    const stored = localStorage.getItem("cropRegion");
-    if (stored) {
-      try {
-        return JSON.parse(stored);
-      } catch (e) {
-        console.error("Error parsing cropRegion from localStorage:", e);
-      }
-    }
-    return null;
-  }
-
-  // Update crop overlay visual based on cropRegion data
-  function updateCropOverlayDisplay() {
-    if (!cropRegion) return;
-    const containerRect = displayContainer.getBoundingClientRect();
-    const videoRect = videoElement.getBoundingClientRect();
-    const videoOffsetX = videoRect.left - containerRect.left;
-    const videoOffsetY = videoRect.top - containerRect.top;
-    cropOverlay.style.display = 'block';
-    cropOverlay.style.left = (videoOffsetX + cropRegion.x) + 'px';
-    cropOverlay.style.top = (videoOffsetY + cropRegion.y) + 'px';
-    cropOverlay.style.width = cropRegion.w + 'px';
-    cropOverlay.style.height = cropRegion.h + 'px';
-  }
-
-  // Hide crop overlay
-  function hideCropOverlay() {
-    cropOverlay.style.display = 'none';
-  }
-
   // Check for frame changes every second to trigger OCR if needed
   setInterval(autoOCRCheck, 1000);
 
-  // When video metadata is loaded, if there's a stored cropRegion, update the overlay and start cropped feed
-  videoElement.addEventListener('loadedmetadata', () => {
-    if (cropRegion) {
-      updateCropOverlayDisplay();
-      if (!cropAnimationFrameID) {
-        updateCroppedFeed();
-      }
-    }
-  });
-
   // Initial render of stored skill data in the UI
   renderSkillDataUI();
+
 })();
