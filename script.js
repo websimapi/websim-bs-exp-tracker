@@ -26,7 +26,7 @@
   let isSelecting = false;
   let startX = 0, startY = 0;
   let currentOverlay = null; // overlay for the region being created
-  const ocrCooldown = 2000; // milliseconds
+  const ocrCooldown = 2000; // This is kept for potential future use
 
   // Start screen capture
   async function startCapture() {
@@ -178,14 +178,25 @@
       colorPickerDiv.appendChild(hexValueSpan);
       regionContainer.appendChild(colorPickerDiv);
 
-      // OCR result container for this region
+      // OCR result container with manual trigger for this region
       const ocrDiv = document.createElement('div');
       ocrDiv.className = 'ocr-result-region';
       const ocrHeader = document.createElement('h2');
       ocrHeader.textContent = 'OCR Result';
+      ocrDiv.appendChild(ocrHeader);
+
+      const runOCRBtn = document.createElement('button');
+      runOCRBtn.textContent = 'Run OCR';
+      runOCRBtn.style.margin = '10px';
+      runOCRBtn.addEventListener('click', () => {
+        if (!region.isOCRProcessing) {
+          performOCRForRegion(region, region.canvas);
+        }
+      });
+      ocrDiv.appendChild(runOCRBtn);
+
       const ocrParagraph = document.createElement('p');
       ocrParagraph.textContent = '';
-      ocrDiv.appendChild(ocrHeader);
       ocrDiv.appendChild(ocrParagraph);
       regionContainer.appendChild(ocrDiv);
 
@@ -238,7 +249,7 @@
     resetCropBtn.style.display = 'none';
   });
 
-  // Continuously update the cropped feeds for all regions
+  // Continuously update the cropped feeds for all regions (without automatic OCR)
   function updateCroppedFeed() {
     if (!videoElement.srcObject) {
       cropRegions.forEach(region => {
@@ -251,7 +262,7 @@
     const scaleX = videoElement.videoWidth / videoRect.width;
     const scaleY = videoElement.videoHeight / videoRect.height;
 
-    // List of colors to replace with bright pink, now with additional removals for 1f1f1f and 1e1f1e
+    // List of colors to replace with bright pink (#FF00FF) including additional colors to remove
     const targetColors = [
       { r: 0x29, g: 0x2c, b: 0x29 },
       { r: 0x29, g: 0x2a, b: 0x29 },
@@ -289,7 +300,6 @@
     const tolerance = 2;
 
     cropRegions.forEach(region => {
-      // Calculate the crop parameters for the video element
       const videoCropX = region.x * scaleX;
       const videoCropY = region.y * scaleY;
       const videoCropWidth = region.w * scaleX;
@@ -310,7 +320,6 @@
 
       const imageData = region.ctx.getImageData(0, 0, region.w, region.h);
       const data = imageData.data;
-      // Replace matching pixels with bright pink (#FF00FF)
       for (let i = 0; i < data.length; i += 4) {
         const r = data[i];
         const g = data[i + 1];
@@ -330,22 +339,6 @@
         }
       }
       region.ctx.putImageData(imageData, 0, 0);
-
-      // Compute a simple checksum hash for change detection
-      let hash = 0;
-      for (let i = 0; i < data.length; i += 20) {
-        hash += data[i] + data[i + 1] + data[i + 2];
-      }
-
-      if (
-        !region.isOCRProcessing &&
-        (hash !== region.lastOCRHash) &&
-        Date.now() - region.lastOCRTime > ocrCooldown
-      ) {
-        region.lastOCRHash = hash;
-        region.lastOCRTime = Date.now();
-        performOCRForRegion(region, region.canvas);
-      }
     });
     requestAnimationFrame(updateCroppedFeed);
   }
@@ -366,28 +359,29 @@
     region.isOCRProcessing = false;
   }
 
-  // Preprocess the canvas: apply grayscale and threshold to enhance OCR accuracy
   function preprocessCanvasForOCR(sourceCanvas) {
+    const scaleFactor = 2;
     const width = sourceCanvas.width;
     const height = sourceCanvas.height;
+    const scaledWidth = width * scaleFactor;
+    const scaledHeight = height * scaleFactor;
     const offCanvas = document.createElement('canvas');
-    offCanvas.width = width;
-    offCanvas.height = height;
+    offCanvas.width = scaledWidth;
+    offCanvas.height = scaledHeight;
     const offCtx = offCanvas.getContext('2d');
-    const sourceCtx = sourceCanvas.getContext('2d');
-    const imageData = sourceCtx.getImageData(0, 0, width, height);
+    offCtx.imageSmoothingEnabled = false;
+    offCtx.drawImage(sourceCanvas, 0, 0, scaledWidth, scaledHeight);
+    const imageData = offCtx.getImageData(0, 0, scaledWidth, scaledHeight);
     const data = imageData.data;
     const threshold = 128;
     for (let i = 0; i < data.length; i += 4) {
-      const r = data[i],
-        g = data[i + 1],
-        b = data[i + 2];
+      const r = data[i], g = data[i+1], b = data[i+2];
       const gray = 0.299 * r + 0.587 * g + 0.114 * b;
       const binaryColor = gray < threshold ? 0 : 255;
       data[i] = binaryColor;
-      data[i + 1] = binaryColor;
-      data[i + 2] = binaryColor;
-      data[i + 3] = 255;
+      data[i+1] = binaryColor;
+      data[i+2] = binaryColor;
+      data[i+3] = 255;
     }
     offCtx.putImageData(imageData, 0, 0);
     return offCanvas;

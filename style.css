@@ -132,4 +132,26 @@ main {
   border-radius: 4px;
   background: #fff;
   color: #333;
+  text-align: center;
+}
+
+.ocr-result-region h2 {
+  margin-bottom: 10px;
+  font-size: 1.2rem;
+}
+
+/* OCR button styling inside each crop region */
+.ocr-result-region button {
+  background-color: #28a745;
+  border: none;
+  color: white;
+  padding: 8px 16px;
+  font-size: 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.ocr-result-region button:hover {
+  background-color: #1e7e34;
 }
