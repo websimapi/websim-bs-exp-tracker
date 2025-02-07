@@ -23,9 +23,9 @@ window.addEventListener("DOMContentLoaded", () => {
   // Archive buttons and modal elements
   const archiveBtn = document.getElementById("archive-btn");
   const viewJournalBtn = document.getElementById("view-journal-btn");
+  const clearArchivesBtn = document.getElementById("clear-archives-btn"); 
   const journalModal = document.getElementById("journal-modal");
   const journalEntries = document.getElementById("journal-entries");
-  const clearArchivesBtn = document.getElementById("clear-archives-btn");
   const modalClose = document.querySelector(".modal-close");
 
   // Initialize the capture module (screen capture, crop selection & cropped feed update)
@@ -65,7 +65,7 @@ window.addEventListener("DOMContentLoaded", () => {
     journalModal.style.display = "block";
   });
 
-  // Clear Archives button event
+  // Clear Archives button event 
   clearArchivesBtn.addEventListener("click", () => {
     clearJournalData(journalEntries);
   });
