@@ -1,6 +1,6 @@
 import { init as initCapture, getCroppedCanvas } from "./capture.js";
 import { initOCR } from "./ocr.js";
-import { initSkillEvents, addSkillReading } from "./skill.js";
+import { initSkillEvents, addSkillReading, archiveTodayData, renderJournalDataUI, autoArchiveAll } from "./skill.js";
 
 window.addEventListener("DOMContentLoaded", () => {
   // Grab necessary DOM elements
@@ -19,6 +19,14 @@ window.addEventListener("DOMContentLoaded", () => {
   const ocrResultsContainer = document.getElementById("ocr-results-container");
   const expRateDiv = document.getElementById("exp-rate");
   const dailyExpDiv = document.getElementById("daily-exp");
+  
+  // Archive buttons and modal elements
+  const archiveBtn = document.getElementById("archive-btn");
+  const viewJournalBtn = document.getElementById("view-journal-btn");
+  const journalModal = document.getElementById("journal-modal");
+  const journalEntries = document.getElementById("journal-entries");
+  const journalSkillName = document.getElementById("journal-skill-name");
+  const modalClose = document.querySelector(".modal-close");
 
   // Initialize the capture module (screen capture, crop selection & cropped feed update)
   initCapture({
@@ -61,4 +69,41 @@ window.addEventListener("DOMContentLoaded", () => {
   
   setInterval(updateCountdown, 1000);
   updateCountdown();
+
+  // Archive Today's Data button event
+  archiveBtn.addEventListener("click", () => {
+    archiveTodayData(expRateDiv, dailyExpDiv, ocrResultsContainer);
+  });
+
+  // View Archived Journal button event - open modal and render journal entries
+  viewJournalBtn.addEventListener("click", () => {
+    // Set the modal heading to the currently selected skill (or empty if none)
+    journalSkillName.textContent = skillSelect.value || "None Selected";
+    renderJournalDataUI(journalEntries);
+    journalModal.style.display = "block";
+  });
+
+  // Modal close event
+  modalClose.addEventListener("click", () => {
+    journalModal.style.display = "none";
+  });
+
+  // Click outside modal content to close
+  window.addEventListener("click", (event) => {
+    if (event.target == journalModal) {
+      journalModal.style.display = "none";
+    }
+  });
+
+  // Schedule auto archive at midnight (daily EXP reset)
+  function scheduleAutoArchive() {
+    const now = new Date();
+    const nextMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    const delay = nextMidnight - now;
+    setTimeout(() => {
+      autoArchiveAll(expRateDiv, dailyExpDiv, ocrResultsContainer);
+      scheduleAutoArchive();
+    }, delay);
+  }
+  scheduleAutoArchive();
 });

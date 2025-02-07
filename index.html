@@ -47,6 +47,9 @@
           </select>
           <button id="reset-exp-btn">Reset Exp Rate</button>
           <button id="clear-ocr-btn">Clear OCR List</button>
+          <!-- New Archive Buttons -->
+          <button id="archive-btn">Archive Today's Data</button>
+          <button id="view-journal-btn">View Archive</button>
         </div>
       </section>
       <section id="cropped-feed">
@@ -68,6 +71,14 @@
     <footer>
       <p>Note: This feature requires browser support for the Screen Capture API.</p>
     </footer>
+    <!-- Modal for Archived Journal -->
+    <div id="journal-modal" class="modal">
+      <div class="modal-content">
+        <span class="modal-close">&times;</span>
+        <h2>Archived Journal for <span id="journal-skill-name"></span></h2>
+        <div id="journal-entries"></div>
+      </div>
+    </div>
     <!-- Include Tesseract.js from CDN -->
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.5/dist/tesseract.min.js"></script>
     <!-- Main entry point -->
