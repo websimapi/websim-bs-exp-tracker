@@ -235,11 +235,7 @@ function archiveData(expRateDiv, totalExpDiv, ocrResultsContainer) {
   if (!journalData[currentSkill]) {
     journalData[currentSkill] = [];
   }
-  const alreadyArchived = journalData[currentSkill].find(entry => entry.date === dateStr);
-  if (alreadyArchived) {
-    alert("Data for today has already been archived for this skill.");
-    return;
-  }
+  // Allow multiple archives per day without blocking duplicates
   const journalEntry = {
     date: dateStr,
     skill: currentSkill,
@@ -295,7 +291,7 @@ function renderJournalDataUI(archiveContainer) {
         e.stopPropagation();
         if (confirm("Are you sure you want to delete this archive entry?")) {
           let jData = loadJournalData();
-          jData[skill] = jData[skill].filter(en => en.date !== entry.date);
+          jData[skill] = jData[skill].filter(en => en.date !== entry.date || en.readings.toString() !== entry.readings.toString());
           saveJournalData(jData);
           renderJournalDataUI(archiveContainer);
         }
