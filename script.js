@@ -18,22 +18,37 @@ import { createWorker } from 'https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/di
   let startY = 0;
   let cropAnimationFrameID = null;
 
-  // Start screen capture
+  // Start screen capture with proper permissions and error handling
   async function startCapture() {
     try {
+      // Use getDisplayMedia to capture screen, window, or tab
       const stream = await navigator.mediaDevices.getDisplayMedia({
-        video: { cursor: "always" },
+        video: {
+          cursor: "always"
+        },
         audio: false
       });
+      // Clear any previous streams
+      if (videoElement.srcObject) {
+        stopStream(videoElement.srcObject);
+      }
       videoElement.srcObject = stream;
+      videoElement.play();
+
+      // Listen for stream ending (user stops sharing)
       stream.getVideoTracks()[0].addEventListener('ended', () => {
         console.log('Screen sharing stopped');
         videoElement.srcObject = null;
       });
     } catch (err) {
-      console.error("Error: " + err);
+      console.error("Error in startCapture:", err);
       alert("An error occurred while trying to capture the screen: " + err.message);
     }
+  }
+
+  // Stop all tracks of a given stream
+  function stopStream(stream) {
+    stream.getTracks().forEach(track => track.stop());
   }
 
   captureBtn.addEventListener('click', () => {
@@ -42,6 +57,10 @@ import { createWorker } from 'https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/di
 
   // Enable crop selection mode
   cropBtn.addEventListener('click', () => {
+    if (!videoElement.srcObject) {
+      alert("Please start screen capture first.");
+      return;
+    }
     cropRegion = null;
     cropOverlay.style.display = 'none';
     resetCropBtn.style.display = 'none';
