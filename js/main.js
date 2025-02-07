@@ -1,13 +1,6 @@
 import { init as initCapture, getCroppedCanvas } from "./capture.js";
 import { initOCR } from "./ocr.js";
-import { 
-  initSkillEvents, 
-  addSkillReading, 
-  archiveTodayData, 
-  renderJournalDataUI, 
-  autoArchiveAll, 
-  archiveAllSkillData 
-} from "./skill.js";
+import { initSkillEvents, addSkillReading, archiveData, renderJournalDataUI } from "./skill.js";
 
 window.addEventListener("DOMContentLoaded", () => {
   // Grab necessary DOM elements
@@ -25,11 +18,10 @@ window.addEventListener("DOMContentLoaded", () => {
   const clearOcrBtn = document.getElementById("clear-ocr-btn");
   const ocrResultsContainer = document.getElementById("ocr-results-container");
   const expRateDiv = document.getElementById("exp-rate");
-  const dailyExpDiv = document.getElementById("daily-exp");
+  const totalExpDiv = document.getElementById("total-exp");
   
   // Archive buttons and modal elements
   const archiveBtn = document.getElementById("archive-btn");
-  const archiveAllBtn = document.getElementById("archive-all-btn");
   const viewJournalBtn = document.getElementById("view-journal-btn");
   const journalModal = document.getElementById("journal-modal");
   const journalEntries = document.getElementById("journal-entries");
@@ -53,38 +45,17 @@ window.addEventListener("DOMContentLoaded", () => {
     clearOcrBtn,
     ocrResultsContainer,
     expRateDiv,
-    dailyExpDiv
+    totalExpDiv
   });
 
   // Initialize OCR processing – runs every second if a new frame is detected.
   initOCR(getCroppedCanvas, (newNumber) => {
-    addSkillReading(newNumber, expRateDiv, dailyExpDiv, ocrResultsContainer);
+    addSkillReading(newNumber, expRateDiv, totalExpDiv, ocrResultsContainer);
   });
   
-  // Countdown Timer for reset at 00:00
-  function updateCountdown() {
-    const countdownEl = document.getElementById("time-till-reset");
-    if (!countdownEl) return;
-    const now = new Date();
-    const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0);
-    const diff = tomorrow - now; // in milliseconds
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-    countdownEl.textContent = `Time till reset: ${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
-  }
-  
-  setInterval(updateCountdown, 1000);
-  updateCountdown();
-
-  // Archive Selected Skill Data button event
+  // Archive button event
   archiveBtn.addEventListener("click", () => {
-    archiveTodayData(expRateDiv, dailyExpDiv, ocrResultsContainer);
-  });
-
-  // Archive All Skill Data button event
-  archiveAllBtn.addEventListener("click", () => {
-    archiveAllSkillData(expRateDiv, dailyExpDiv, ocrResultsContainer);
+    archiveData(expRateDiv, totalExpDiv, ocrResultsContainer);
   });
 
   // View Archived Journal button event - open modal and render journal entries
@@ -104,16 +75,4 @@ window.addEventListener("DOMContentLoaded", () => {
       journalModal.style.display = "none";
     }
   });
-
-  // Schedule auto archive at midnight (daily EXP reset)
-  function scheduleAutoArchive() {
-    const now = new Date();
-    const nextMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-    const delay = nextMidnight - now;
-    setTimeout(() => {
-      autoArchiveAll(expRateDiv, dailyExpDiv, ocrResultsContainer);
-      scheduleAutoArchive();
-    }, delay);
-  }
-  scheduleAutoArchive();
 });
