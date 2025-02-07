@@ -11,25 +11,27 @@
   const croppedCanvas = document.getElementById('cropped-canvas');
   const croppedCtx = croppedCanvas.getContext('2d');
   const skillSelect = document.getElementById('skill-select');
-  const resetExpBtn = document.getElementById('reset-exp-btn'); // New button for resetting EXP rate
-  
+  const resetExpBtn = document.getElementById('reset-exp-btn'); // Reset Exp Rate button
+  const resetDailyExpBtn = document.getElementById('reset-daily-exp-btn'); // New button for resetting Daily EXP
+
   let cropRegion = null; // { x, y, w, h } relative to the video element's displayed area
   let isSelecting = false;
   let startX = 0;
   let startY = 0;
   let cropAnimationFrameID = null;
   
-  // Global variables for OCR and current label
+  // Global OCR and skill variables
   let previousOCRFrame = '';
   let ocrInProgress = false;
   let currentSkill = '';
 
-  // Load skill data from Local Storage
+  // Load data from Local Storage
   let skillData = loadSkillData();
-  // Load exp reset data from Local Storage (for resetting xp/hr calculations)
   let expResetData = loadExpResetData();
+  let dailyResetData = loadDailyResetData();
+  cropRegion = loadCropRegion(); // Load saved cropRegion, if any
 
-  // When the user selects a skill, update the current label and UI
+  // When a skill is selected, update current label and UI
   skillSelect.addEventListener('change', (e) => {
     currentSkill = e.target.value;
     renderSkillDataUI();
@@ -37,7 +39,7 @@
     updateDailyExp();
   });
 
-  // Event listener for resetting the EXP Rate (new feature)
+  // Event listener for resetting the EXP Rate
   resetExpBtn.addEventListener('click', () => {
     if (!currentSkill) {
       alert("Please select a skill first to reset Exp Rate!");
@@ -52,6 +54,23 @@
     expResetData[currentSkill] = { baseline: lastReading.value, timestamp: lastReading.timestamp };
     saveExpResetData();
     updateExpRate();
+  });
+
+  // Event listener for resetting the Daily EXP
+  resetDailyExpBtn.addEventListener('click', () => {
+    if (!currentSkill) {
+      alert("Please select a skill first to reset Daily EXP!");
+      return;
+    }
+    const readings = skillData[currentSkill];
+    if (!readings || readings.length === 0) {
+      alert("No readings available for selected skill to reset Daily EXP!");
+      return;
+    }
+    const lastReading = readings[readings.length - 1];
+    dailyResetData[currentSkill] = { baseline: lastReading.value, timestamp: lastReading.timestamp };
+    saveDailyResetData();
+    updateDailyExp();
   });
 
   // Start screen capture
@@ -79,6 +98,7 @@
   // Enable crop selection mode
   cropBtn.addEventListener('click', () => {
     cropRegion = null;
+    saveCropRegion(null);
     cropOverlay.style.display = 'none';
     resetCropBtn.style.display = 'none';
     displayContainer.addEventListener('mousedown', startCrop);
@@ -90,7 +110,7 @@
     if (!videoElement.srcObject) return;
     const containerRect = displayContainer.getBoundingClientRect();
     const videoRect = videoElement.getBoundingClientRect();
-    // Only allow selection if click is within the video bounds
+    // Only allow selection if click is within video bounds
     if (
       e.clientX < videoRect.left ||
       e.clientX > videoRect.right ||
@@ -100,7 +120,6 @@
       return;
     }
     isSelecting = true;
-    // Calculate starting coordinates relative to the video element
     startX = e.clientX - videoRect.left;
     startY = e.clientY - videoRect.top;
     const videoOffsetX = videoRect.left - containerRect.left;
@@ -124,7 +143,6 @@
     const videoRect = videoElement.getBoundingClientRect();
     const videoOffsetX = videoRect.left - containerRect.left;
     const videoOffsetY = videoRect.top - containerRect.top;
-    // Clamp the current mouse position to the video bounds
     const currentClientX = Math.min(Math.max(e.clientX, videoRect.left), videoRect.right);
     const currentClientY = Math.min(Math.max(e.clientY, videoRect.top), videoRect.bottom);
     const currentXRel = currentClientX - videoRect.left;
@@ -133,7 +151,6 @@
     const relY = Math.min(startY, currentYRel);
     const width = Math.abs(currentXRel - startX);
     const height = Math.abs(currentYRel - startY);
-    // Position the crop overlay (using container coordinates)
     cropOverlay.style.left = (videoOffsetX + relX) + 'px';
     cropOverlay.style.top = (videoOffsetY + relY) + 'px';
     cropOverlay.style.width = width + 'px';
@@ -147,7 +164,6 @@
     const videoRect = videoElement.getBoundingClientRect();
     const videoOffsetX = videoRect.left - containerRect.left;
     const videoOffsetY = videoRect.top - containerRect.top;
-    // Clamp the release position to video bounds
     const endClientX = Math.min(Math.max(e.clientX, videoRect.left), videoRect.right);
     const endClientY = Math.min(Math.max(e.clientY, videoRect.top), videoRect.bottom);
     const endXRel = endClientX - videoRect.left;
@@ -159,6 +175,7 @@
     // Only register a legitimate crop if the area is large enough
     if (rectWidth > 10 && rectHeight > 10) {
       cropRegion = { x: rectLeft, y: rectTop, w: rectWidth, h: rectHeight };
+      saveCropRegion(cropRegion);
       resetCropBtn.style.display = 'inline-block';
       if (!cropAnimationFrameID) {
         updateCroppedFeed();
@@ -206,13 +223,14 @@
   // Reset crop selection on user request
   resetCropBtn.addEventListener('click', () => {
     cropRegion = null;
+    saveCropRegion(null);
     cropOverlay.style.display = 'none';
     resetCropBtn.style.display = 'none';
     if (cropAnimationFrameID) {
       cancelAnimationFrame(cropAnimationFrameID);
       cropAnimationFrameID = null;
     }
-    // Also reset OCR detection data so it doesn't trigger on stale frames
+    // Also reset OCR state so stale frames don't trigger OCR
     previousOCRFrame = '';
     displayContainer.addEventListener('mousedown', startCrop);
   });
@@ -229,7 +247,7 @@
     } catch (e) {
       return;
     }
-    // Run OCR only if a new frame is detected and if not already processing OCR
+    // Run OCR only if frame has changed and if not already processing OCR
     if (currentDataURL !== previousOCRFrame && !ocrInProgress) {
       previousOCRFrame = currentDataURL;
       ocrInProgress = true;
@@ -238,7 +256,7 @@
         const { data: { text } } = await Tesseract.recognize(croppedCanvas, 'eng', {
           logger: m => console.log(m)
         });
-        // Remove everything except numbers and optional dot
+        // Remove everything except numbers and an optional dot
         const numbersOnly = text.replace(/[^0-9.]/g, '').trim();
         if (numbersOnly) {
           const newNumber = parseFloat(numbersOnly);
@@ -253,7 +271,7 @@
                 skillData[currentSkill] = [];
               }
               const readings = skillData[currentSkill];
-              // Ignore the reading if it is less than the last recorded value
+              // Ignore reading if it's less than last recorded value
               if (readings.length > 0 && newNumber < readings[readings.length - 1].value) {
                 console.log("Ignored OCR reading, number is less than previous value.");
               } else {
@@ -275,7 +293,7 @@
     }
   }
 
-  // Calculate and update experience gain rate for the current skill using reset data if available
+  // Calculate and update EXP rate for current skill using reset data if available
   function updateExpRate() {
     const expRateDiv = document.getElementById("exp-rate");
     if (!currentSkill || !skillData[currentSkill] || skillData[currentSkill].length < 2) {
@@ -305,24 +323,31 @@
     expRateDiv.textContent = "Exp Rate (" + currentSkill + "): " + expRate.toFixed(2) + " xp/h";
   }
 
-  // Update and display daily EXP gain for the current skill
+  // Update and display Daily EXP gain for current skill, using daily reset data if available
   function updateDailyExp() {
     const dailyExpDiv = document.getElementById("daily-exp");
     if (!currentSkill || !skillData[currentSkill] || skillData[currentSkill].length === 0) {
       dailyExpDiv.textContent = "Daily EXP: N/A";
       return;
     }
-    const today = new Date();
-    today.setHours(0,0,0,0);
-    const startOfDay = today.getTime();
-    const readingsToday = skillData[currentSkill].filter(r => r.timestamp >= startOfDay);
-    if (readingsToday.length < 2) {
+    let baselineTimestamp = new Date().setHours(0,0,0,0);
+    let baselineValue = null;
+    if (dailyResetData[currentSkill]) {
+      // Use the later baseline between today start and daily reset timestamp
+      baselineTimestamp = Math.max(baselineTimestamp, dailyResetData[currentSkill].timestamp);
+      baselineValue = dailyResetData[currentSkill].baseline;
+    }
+    const readings = skillData[currentSkill].filter(r => r.timestamp >= baselineTimestamp);
+    if (readings.length < 1) {
       dailyExpDiv.textContent = "Daily EXP: N/A";
       return;
     }
-    const first = readingsToday[0];
-    const last = readingsToday[readingsToday.length - 1];
-    const deltaExp = last.value - first.value;
+    // Use the first reading as baseline if daily reset is not set
+    if (baselineValue === null) {
+      baselineValue = readings[0].value;
+    }
+    const last = readings[readings.length - 1];
+    const deltaExp = last.value - baselineValue;
     dailyExpDiv.textContent = "Daily EXP (" + currentSkill + "): " + deltaExp.toFixed(2);
   }
 
@@ -342,7 +367,7 @@
         groupDiv.appendChild(p);
       } else {
         const ul = document.createElement("ul");
-        // Render the list in reverse order without changing the math/calculations
+        // Render the list in reverse order
         const reversedReadings = skillData[skill].slice().reverse();
         reversedReadings.forEach(reading => {
           const li = document.createElement("li");
@@ -355,7 +380,7 @@
     }
   }
 
-  // Load skill data from local storage
+  // Load skill data from localStorage
   function loadSkillData() {
     const stored = localStorage.getItem("skillData");
     if (stored) {
@@ -368,12 +393,12 @@
     return {};
   }
   
-  // Save skill data to local storage
+  // Save skill data to localStorage
   function saveSkillData() {
     localStorage.setItem("skillData", JSON.stringify(skillData));
   }
   
-  // Load exp reset data from local storage
+  // Load EXP reset data from localStorage
   function loadExpResetData() {
     const stored = localStorage.getItem("expResetData");
     if (stored) {
@@ -386,9 +411,60 @@
     return {};
   }
   
-  // Save exp reset data to local storage
+  // Save EXP reset data to localStorage
   function saveExpResetData() {
     localStorage.setItem("expResetData", JSON.stringify(expResetData));
+  }
+
+  // Load Daily EXP reset data from localStorage
+  function loadDailyResetData() {
+    const stored = localStorage.getItem("dailyResetData");
+    if (stored) {
+      try {
+        return JSON.parse(stored);
+      } catch (e) {
+        console.error("Error parsing dailyResetData from localStorage:", e);
+      }
+    }
+    return {};
+  }
+
+  // Save Daily EXP reset data to localStorage
+  function saveDailyResetData() {
+    localStorage.setItem("dailyResetData", JSON.stringify(dailyResetData));
+  }
+
+  // Load crop region from localStorage
+  function loadCropRegion() {
+    const stored = localStorage.getItem("cropRegion");
+    if (stored) {
+      try {
+        const region = JSON.parse(stored);
+        // If valid, display the crop overlay
+        if (region && region.x != null && region.y != null && region.w && region.h) {
+          cropOverlay.style.display = 'block';
+          // To position the overlay correctly, we need to wait for video element positioning.
+          // This is a best effort restoration.
+          cropOverlay.style.left = region.x + 'px';
+          cropOverlay.style.top = region.y + 'px';
+          cropOverlay.style.width = region.w + 'px';
+          cropOverlay.style.height = region.h + 'px';
+          return region;
+        }
+      } catch (e) {
+        console.error("Error parsing cropRegion from localStorage:", e);
+      }
+    }
+    return null;
+  }
+
+  // Save crop region to localStorage
+  function saveCropRegion(region) {
+    if (region) {
+      localStorage.setItem("cropRegion", JSON.stringify(region));
+    } else {
+      localStorage.removeItem("cropRegion");
+    }
   }
 
   // Check for frame changes every second to trigger OCR if needed
@@ -396,4 +472,8 @@
 
   // Initial render of stored skill data in the UI
   renderSkillDataUI();
+  // If a cropRegion was loaded from storage, start updating the cropped feed.
+  if (cropRegion) {
+    updateCroppedFeed();
+  }
 })();
