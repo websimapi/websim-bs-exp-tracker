@@ -2,9 +2,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Live Window/Tab Capture with Cropping</title>
+    <title>Live Window/Tab Capture with Cropping & Multiple OCR</title>
     <link rel="stylesheet" href="style.css" />
-    <!-- Include Tesseract.js for OCR (using version 2.1.5) -->
+    <!-- Include Tesseract.js for OCR (v2.1.5) -->
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.5/dist/tesseract.min.js"></script>
   </head>
   <body>
@@ -15,32 +15,20 @@
       <section id="controls">
         <button id="capture-btn">Select Screen To Capture</button>
         <button id="crop-btn">Select Crop Region</button>
-        <button id="reset-crop-btn" style="display:none;">Reset Crop</button>
+        <button id="reset-crop-btn" style="display:none;">Reset Crops</button>
       </section>
       <section id="display-container">
-        <!-- Video container which will show the live screen capture -->
+        <!-- Video container showing live capture -->
         <video id="capture-video" playsinline autoplay></video>
-        <!-- Cropping overlay (positioned on top of the video) -->
-        <div id="crop-overlay"></div>
+        <!-- Cropping overlays will be appended here dynamically -->
       </section>
       <section id="cropped-feed">
         <h2>Cropped Feed</h2>
-        <canvas id="cropped-canvas"></canvas>
-        <!-- New Color Picker UI -->
-        <div id="color-picker">
-          <label>Click on cropped feed to pick color:</label>
-          <div id="picked-color-swatch"></div>
-          <span id="color-hex-value">#FFFFFF</span>
-        </div>
-        <!-- New OCR output container -->
-        <div id="ocr-result">
-          <h2>OCR Result</h2>
-          <p id="ocr-text"></p>
-        </div>
+        <div id="cropped-feed-container"></div>
       </section>
     </main>
     <footer>
-      <p>Note: This feature requires browser support for Screen Capture API.</p>
+      <p>Note: This feature requires browser support for the Screen Capture API.</p>
     </footer>
     <script src="script.js" type="module"></script>
   <script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"4c6229722a6346bc8eb5cb0e5eae5d41","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>

@@ -72,30 +72,44 @@ main {
   border-radius: 4px;
 }
 
-/* Crop overlay styling */
-#crop-overlay {
+/* Crop overlay for new regions */
+.crop-overlay {
   position: absolute;
   border: 2px dashed red;
   background: rgba(255, 0, 0, 0.2);
-  display: none;
   pointer-events: none;
 }
 
-/* Cropped feed styling */
+/* Cropped feed container styling */
 #cropped-feed {
   margin-top: 20px;
-  text-align: center;
 }
 
-#cropped-canvas {
+#cropped-feed-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Each cropped region container */
+.crop-region {
+  margin: 10px;
   border: 2px solid #28a745;
   border-radius: 4px;
-  max-width: 100%;
+  padding: 10px;
+  background: #fff;
 }
 
-/* Color Picker styling */
-#color-picker {
-  margin-top: 20px;
+/* Canvas inside the cropped region */
+.crop-region canvas {
+  display: block;
+  border: 2px solid #28a745;
+  border-radius: 4px;
+}
+
+/* Color Picker UI for each region */
+.color-picker-region {
+  margin-top: 10px;
   text-align: center;
   display: flex;
   justify-content: center;
@@ -104,25 +118,15 @@ main {
   font-size: 1.2rem;
 }
 
-#color-picker label {
-  font-weight: bold;
-}
-
-#picked-color-swatch {
+.color-picker-region .swatch {
   width: 40px;
   height: 40px;
   border: 2px solid #333;
-  display: inline-block;
-  vertical-align: middle;
 }
 
-#color-hex-value {
-  font-family: monospace;
-}
-
-/* OCR Result Styling */
-#ocr-result {
-  margin-top: 20px;
+/* OCR Result styling for each region */
+.ocr-result-region {
+  margin-top: 10px;
   padding: 10px;
   border: 2px solid #007BFF;
   border-radius: 4px;
