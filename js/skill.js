@@ -166,10 +166,28 @@ function renderSkillDataUI(ocrResultsContainer) {
       groupDiv.appendChild(p);
     } else {
       const ul = document.createElement("ul");
+      // Render in reverse order
       const reversedReadings = skillData[skill].slice().reverse();
       reversedReadings.forEach((reading) => {
         const li = document.createElement("li");
-        li.textContent = reading.value + " (" + new Date(reading.timestamp).toLocaleTimeString() + ")";
+        li.innerHTML = reading.value + " (" + new Date(reading.timestamp).toLocaleTimeString() + ") ";
+        const deleteBtn = document.createElement("button");
+        deleteBtn.textContent = "🗑️";
+        deleteBtn.className = "delete-reading";
+        deleteBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          if (confirm("Are you sure you want to delete this OCR reading?")) {
+            // Remove the reading with matching timestamp
+            skillData[skill] = skillData[skill].filter(r => r.timestamp !== reading.timestamp);
+            saveSkillData();
+            renderSkillDataUI(ocrResultsContainer);
+            const expRateDiv = document.getElementById("exp-rate");
+            const dailyExpDiv = document.getElementById("daily-exp");
+            updateExpRate(expRateDiv);
+            updateDailyExp(dailyExpDiv);
+          }
+        });
+        li.appendChild(deleteBtn);
         ul.appendChild(li);
       });
       groupDiv.appendChild(ul);
@@ -264,6 +282,7 @@ function renderJournalDataUI(archiveContainer) {
         <div class="journal-entry-header">
           <span><strong>Date:</strong> ${entry.date}</span> |
           <span><strong>Daily EXP:</strong> ${entry.dailyExp.toFixed(2)}</span>
+          <button class="delete-archive" data-skill="${skill}" data-date="${entry.date}">Delete</button>
         </div>
         <details class="journal-entry-details">
           <summary>Readings</summary>
@@ -272,6 +291,16 @@ function renderJournalDataUI(archiveContainer) {
           </ul>
         </details>
       `;
+      const deleteBtn = entryDiv.querySelector('.delete-archive');
+      deleteBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (confirm("Are you sure you want to delete this archive entry?")) {
+          let jData = loadJournalData();
+          jData[skill] = jData[skill].filter(en => en.date !== entry.date);
+          saveJournalData(jData);
+          renderJournalDataUI(archiveContainer);
+        }
+      });
       skillContainer.appendChild(entryDiv);
     });
     archiveContainer.appendChild(skillContainer);
