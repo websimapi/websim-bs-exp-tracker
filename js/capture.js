@@ -38,9 +38,27 @@ async function startCapture() {
     videoElement.srcObject = stream;
     videoElement.onloadedmetadata = () => {
       videoElement.play();
+      // Attempt to load saved crop region from localStorage
       const savedCrop = localStorage.getItem("savedCropRegion");
       if (savedCrop) {
-        cropRegion = JSON.parse(savedCrop);
+        try {
+          const parsedCrop = JSON.parse(savedCrop);
+          // Validate parsed crop region properties
+          if (typeof parsedCrop.x === "number" && typeof parsedCrop.y === "number" &&
+              typeof parsedCrop.w === "number" && typeof parsedCrop.h === "number") {
+            cropRegion = parsedCrop;
+          } else {
+            cropRegion = null;
+            localStorage.removeItem("savedCropRegion");
+          }
+        } catch (e) {
+          console.error("Error parsing saved crop region:", e);
+          cropRegion = null;
+          localStorage.removeItem("savedCropRegion");
+        }
+      }
+      if (cropRegion) {
+        // Position the crop overlay relative to the video element within the container
         const containerRect = displayContainer.getBoundingClientRect();
         const videoRect = videoElement.getBoundingClientRect();
         const videoOffsetX = videoRect.left - containerRect.left;
@@ -160,15 +178,27 @@ function updateCroppedFeed() {
     cropAnimationFrameID = null;
     return;
   }
+  // Ensure video metadata is ready to avoid division by zero
+  if (videoElement.videoWidth === 0 || videoElement.videoHeight === 0) {
+    cropAnimationFrameID = requestAnimationFrame(updateCroppedFeed);
+    return;
+  }
   const videoRect = videoElement.getBoundingClientRect();
   const scaleX = videoElement.videoWidth / videoRect.width;
   const scaleY = videoElement.videoHeight / videoRect.height;
-  const videoCropX = cropRegion.x * scaleX;
-  const videoCropY = cropRegion.y * scaleY;
-  const videoCropWidth = cropRegion.w * scaleX;
-  const videoCropHeight = cropRegion.h * scaleY;
-  croppedCanvas.width = cropRegion.w;
-  croppedCanvas.height = cropRegion.h;
+  // Clamp crop region values to video dimensions
+  const clampedX = Math.min(cropRegion.x, videoElement.videoWidth);
+  const clampedY = Math.min(cropRegion.y, videoElement.videoHeight);
+  const clampedWidth = Math.min(cropRegion.w, videoElement.videoWidth - clampedX);
+  const clampedHeight = Math.min(cropRegion.h, videoElement.videoHeight - clampedY);
+  
+  const videoCropX = clampedX * scaleX;
+  const videoCropY = clampedY * scaleY;
+  const videoCropWidth = clampedWidth * scaleX;
+  const videoCropHeight = clampedHeight * scaleY;
+  
+  croppedCanvas.width = clampedWidth;
+  croppedCanvas.height = clampedHeight;
   croppedCtx.drawImage(
     videoElement,
     videoCropX,
@@ -177,8 +207,8 @@ function updateCroppedFeed() {
     videoCropHeight,
     0,
     0,
-    cropRegion.w,
-    cropRegion.h
+    clampedWidth,
+    clampedHeight
   );
   cropAnimationFrameID = requestAnimationFrame(updateCroppedFeed);
 }

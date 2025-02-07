@@ -40,7 +40,7 @@ window.addEventListener("DOMContentLoaded", () => {
   });
 
   // Initialize OCR processing – runs every second if a new frame is detected.
-  initOCR(getCroppedCanvas, (newNumber) => {
+  initOCR(getCroppedCanvas,!NaN?(newNumber) => {
     addSkillReading(newNumber, expRateDiv, dailyExpDiv, ocrResultsContainer);
-  });
+  }:null);
 });
