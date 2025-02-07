@@ -25,25 +25,34 @@
         <!-- Labeling Controls: Custom Skill dropdown for OCR readings -->
         <div id="labeling-controls">
           <label for="skill-select">Select Skill: </label>
-          <!-- The select element will be transformed into a custom dropdown -->
+          <!-- The select element with optgroup subcategories -->
           <select id="skill-select">
-            <option value="chef">Chef</option>
-            <option value="woodcutter">Woodcutter</option>
-            <option value="forager">Forager</option>
-            <option value="alchemist">Alchemist</option>
-            <option value="fisher">Fisher</option>
-            <option value="bonewright">Bonewright</option>
-            <option value="blacksmith">Blacksmith</option>
-            <option value="detective">Detective</option>
-            <option value="merchant">Merchant</option>
-            <option value="stonemason">Stonemason</option>
-            <option value="carpenter">Carpenter</option>
-            <option value="watchperson">Watchperson</option>
-            <option value="guard">Guard</option>
-            <option value="miner">Miner</option>
-            <option value="gatherer">Gatherer</option>
-            <option value="leatherworker">Leatherworker</option>
-            <option value="scout">Scout</option>
+            <optgroup label="Hopeport" data-bg="#95905d">
+              <option value="guard">Guard</option>
+              <option value="chef">Chef</option>
+              <option value="fisher">Fishing</option>
+              <option value="forager">Foraging</option>
+              <option value="alchemist">Alchemist</option>
+            </optgroup>
+            <optgroup label="Hopeforest" data-bg="#93d857">
+              <option value="scout">Scout</option>
+              <option value="gatherer">Gatherer</option>
+              <option value="lumberjack">Lumberjack</option>
+              <option value="carpenter">Carpenter</option>
+            </optgroup>
+            <optgroup label="Mine of Mantuban" data-bg="#6dc3fc">
+              <option value="minefighter">Minefighter</option>
+              <option value="bonewright">Bonewright</option>
+              <option value="miner">Miner</option>
+              <option value="blacksmith">Blacksmith</option>
+              <option value="stonemason">Stonemason</option>
+            </optgroup>
+            <optgroup label="Crenopolis" data-bg="#878372">
+              <option value="watchperson">Watchperson</option>
+              <option value="detective">Detective</option>
+              <option value="leatherworker">Leatherworker</option>
+              <option value="merchant">Merchant</option>
+            </optgroup>
           </select>
           <button id="reset-exp-btn">Reset Exp Rate</button>
           <button id="clear-ocr-btn">Clear OCR List</button>
