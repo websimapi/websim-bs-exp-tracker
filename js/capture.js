@@ -36,44 +36,6 @@ async function startCapture() {
       audio: false,
     });
     videoElement.srcObject = stream;
-    videoElement.onloadedmetadata = () => {
-      videoElement.play();
-      // Attempt to load saved crop region from localStorage
-      const savedCrop = localStorage.getItem("savedCropRegion");
-      if (savedCrop) {
-        try {
-          const parsedCrop = JSON.parse(savedCrop);
-          // Validate parsed crop region properties
-          if (typeof parsedCrop.x === "number" && typeof parsedCrop.y === "number" &&
-              typeof parsedCrop.w === "number" && typeof parsedCrop.h === "number") {
-            cropRegion = parsedCrop;
-          } else {
-            cropRegion = null;
-            localStorage.removeItem("savedCropRegion");
-          }
-        } catch (e) {
-          console.error("Error parsing saved crop region:", e);
-          cropRegion = null;
-          localStorage.removeItem("savedCropRegion");
-        }
-      }
-      if (cropRegion) {
-        // Position the crop overlay relative to the video element within the container
-        const containerRect = displayContainer.getBoundingClientRect();
-        const videoRect = videoElement.getBoundingClientRect();
-        const videoOffsetX = videoRect.left - containerRect.left;
-        const videoOffsetY = videoRect.top - containerRect.top;
-        cropOverlay.style.display = "block";
-        cropOverlay.style.left = (videoOffsetX + cropRegion.x) + "px";
-        cropOverlay.style.top = (videoOffsetY + cropRegion.y) + "px";
-        cropOverlay.style.width = cropRegion.w + "px";
-        cropOverlay.style.height = cropRegion.h + "px";
-        document.getElementById("reset-crop-btn").style.display = "inline-block";
-        if (!cropAnimationFrameID) {
-          updateCroppedFeed();
-        }
-      }
-    };
     stream.getVideoTracks()[0].addEventListener("ended", () => {
       console.log("Screen sharing stopped");
       videoElement.srcObject = null;
@@ -96,6 +58,7 @@ function startCrop(e) {
   if (!videoElement.srcObject) return;
   const containerRect = displayContainer.getBoundingClientRect();
   const videoRect = videoElement.getBoundingClientRect();
+  // Only allow starting crop if inside video bounds
   if (
     e.clientX < videoRect.left ||
     e.clientX > videoRect.right ||
@@ -158,7 +121,6 @@ function endCrop(e) {
   if (rectWidth > 10 && rectHeight > 10) {
     cropRegion = { x: rectLeft, y: rectTop, w: rectWidth, h: rectHeight };
     document.getElementById("reset-crop-btn").style.display = "inline-block";
-    localStorage.setItem("savedCropRegion", JSON.stringify(cropRegion));
     if (!cropAnimationFrameID) {
       updateCroppedFeed();
     }
@@ -178,27 +140,15 @@ function updateCroppedFeed() {
     cropAnimationFrameID = null;
     return;
   }
-  // Ensure video metadata is ready to avoid division by zero
-  if (videoElement.videoWidth === 0 || videoElement.videoHeight === 0) {
-    cropAnimationFrameID = requestAnimationFrame(updateCroppedFeed);
-    return;
-  }
   const videoRect = videoElement.getBoundingClientRect();
   const scaleX = videoElement.videoWidth / videoRect.width;
   const scaleY = videoElement.videoHeight / videoRect.height;
-  // Clamp crop region values to video dimensions
-  const clampedX = Math.min(cropRegion.x, videoElement.videoWidth);
-  const clampedY = Math.min(cropRegion.y, videoElement.videoHeight);
-  const clampedWidth = Math.min(cropRegion.w, videoElement.videoWidth - clampedX);
-  const clampedHeight = Math.min(cropRegion.h, videoElement.videoHeight - clampedY);
-  
-  const videoCropX = clampedX * scaleX;
-  const videoCropY = clampedY * scaleY;
-  const videoCropWidth = clampedWidth * scaleX;
-  const videoCropHeight = clampedHeight * scaleY;
-  
-  croppedCanvas.width = clampedWidth;
-  croppedCanvas.height = clampedHeight;
+  const videoCropX = cropRegion.x * scaleX;
+  const videoCropY = cropRegion.y * scaleY;
+  const videoCropWidth = cropRegion.w * scaleX;
+  const videoCropHeight = cropRegion.h * scaleY;
+  croppedCanvas.width = cropRegion.w;
+  croppedCanvas.height = cropRegion.h;
   croppedCtx.drawImage(
     videoElement,
     videoCropX,
@@ -207,8 +157,8 @@ function updateCroppedFeed() {
     videoCropHeight,
     0,
     0,
-    clampedWidth,
-    clampedHeight
+    cropRegion.w,
+    cropRegion.h
   );
   cropAnimationFrameID = requestAnimationFrame(updateCroppedFeed);
 }
@@ -217,7 +167,6 @@ function resetCropSelection() {
   cropRegion = null;
   cropOverlay.style.display = "none";
   document.getElementById("reset-crop-btn").style.display = "none";
-  localStorage.removeItem("savedCropRegion");
   if (cropAnimationFrameID) {
     cancelAnimationFrame(cropAnimationFrameID);
     cropAnimationFrameID = null;

@@ -15,6 +15,7 @@ window.addEventListener("DOMContentLoaded", () => {
   // Skill UI elements
   const skillSelect = document.getElementById("skill-select");
   const resetExpBtn = document.getElementById("reset-exp-btn");
+  const clearOcrBtn = document.getElementById("clear-ocr-btn");
   const ocrResultsContainer = document.getElementById("ocr-results-container");
   const expRateDiv = document.getElementById("exp-rate");
   const dailyExpDiv = document.getElementById("daily-exp");
@@ -34,13 +35,14 @@ window.addEventListener("DOMContentLoaded", () => {
   initSkillEvents({
     skillSelect,
     resetExpBtn,
+    clearOcrBtn,
     ocrResultsContainer,
     expRateDiv,
     dailyExpDiv
   });
 
   // Initialize OCR processing – runs every second if a new frame is detected.
-  initOCR(getCroppedCanvas,!NaN?(newNumber) => {
+  initOCR(getCroppedCanvas, (newNumber) => {
     addSkillReading(newNumber, expRateDiv, dailyExpDiv, ocrResultsContainer);
-  }:null);
+  });
 });

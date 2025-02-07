@@ -89,6 +89,16 @@ main {
   background-color: #1e7e34;
 }
 
+/* Specific styling for Clear OCR List button */
+#clear-ocr-btn {
+  background-color: #dc3545;
+  margin-left: 8px;
+}
+
+#clear-ocr-btn:hover {
+  background-color: #c82333;
+}
+
 /* Display container styling */
 #display-container {
   position: relative;

@@ -4,7 +4,7 @@ let skillData = {};
 let expResetData = {};
 let currentSkill = "";
 
-function initSkillEvents({ skillSelect, resetExpBtn, ocrResultsContainer, expRateDiv, dailyExpDiv }) {
+function initSkillEvents({ skillSelect, resetExpBtn, clearOcrBtn, ocrResultsContainer, expRateDiv, dailyExpDiv }) {
   // Load stored data
   skillData = loadSkillData();
   expResetData = loadExpResetData();
@@ -33,6 +33,20 @@ function initSkillEvents({ skillSelect, resetExpBtn, ocrResultsContainer, expRat
     expResetData[currentSkill] = { baseline: lastReading.value, timestamp: lastReading.timestamp };
     saveExpResetData();
     updateExpRate(expRateDiv);
+  });
+
+  clearOcrBtn.addEventListener("click", () => {
+    if (!currentSkill) {
+      alert("Please select a skill first to clear OCR list!");
+      return;
+    }
+    if (confirm(`Are you sure you want to clear the OCR list for ${currentSkill}? This cannot be undone.`)) {
+      skillData[currentSkill] = [];
+      saveSkillData();
+      renderSkillDataUI(ocrResultsContainer);
+      updateExpRate(expRateDiv);
+      updateDailyExp(dailyExpDiv);
+    }
   });
 }
 
