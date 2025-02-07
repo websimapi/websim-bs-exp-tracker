@@ -27,23 +27,32 @@
           <label for="skill-select">Select Skill: </label>
           <!-- The select element will be transformed into a custom dropdown with icons -->
           <select id="skill-select">
-            <option value="chef_icon" data-icon="/36px-Chef_icon.webp">Chef</option>
-            <option value="woodcutter_icon" data-icon="/36px-Woodcutter_icon.webp">Woodcutter</option>
-            <option value="forager_icon" data-icon="/36px-Forager_icon.webp">Forager</option>
-            <option value="alchemist_potion" data-icon="/32px-Alchemist_icon.webp">Alchemist</option>
-            <option value="fisher_icon" data-icon="/36px-Fisher_icon.webp">Fisher</option>
-            <option value="pixel_bone_icon" data-icon="/36px-Bonewright_icon.webp">Bonewright</option>
-            <option value="blacksmith_ingot" data-icon="/36px-Blacksmith_icon.webp">Blacksmith</option>
-            <option value="detective_icon" data-icon="/32px-Detective_icon.webp">Detective</option>
-            <option value="merchant_stall_icon" data-icon="/36px-Merchant_icon.webp">Merchant</option>
-            <option value="stonemason_icon" data-icon="/30px-Stonemason_icon.webp">Stonemason</option>
-            <option value="circular_saw_blade" data-icon="/36px-Carpenter_icon.webp">Carpenter</option>
-            <option value="shield_sword_icon" data-icon="/36px-Watchperson_icon.webp">Watchperson</option>
-            <option value="sword_and_shield" data-icon="/36px-Guard_icon.webp">Guard</option>
-            <option value="mining_pickaxe_icon" data-icon="/36px-Miner_icon.webp">Miner</option>
-            <option value="gatherer_icon" data-icon="/36px-Gatherer_icon.webp">Gatherer</option>
-            <option value="leatherworker_icon" data-icon="/36px-Leatherworker_icon.webp">Leatherworker</option>
-            <option value="scout_sword_icon" data-icon="/36px-Scout_icon.webp">Scout</option>
+            <optgroup label="Hopeport">
+              <option value="sword_and_shield" data-icon="/36px-Guard_icon.webp">Guard</option>
+              <option value="chef_icon" data-icon="/36px-Chef_icon.webp">Chef</option>
+              <option value="fisher_icon" data-icon="/36px-Fisher_icon.webp">Fishing</option>
+              <option value="forager_icon" data-icon="/36px-Forager_icon.webp">Foraging</option>
+              <option value="alchemist_potion" data-icon="/32px-Alchemist_icon.webp">Alchemist</option>
+            </optgroup>
+            <optgroup label="Hopeforest">
+              <option value="scout_sword_icon" data-icon="/36px-Scout_icon.webp">Scout</option>
+              <option value="gatherer_icon" data-icon="/36px-Gatherer_icon.webp">Gatherer</option>
+              <option value="woodcutter_icon" data-icon="/36px-Woodcutter_icon.webp">Lumberjack</option>
+              <option value="circular_saw_blade" data-icon="/36px-Carpenter_icon.webp">Carpenter</option>
+            </optgroup>
+            <optgroup label="Mine of Mantuban">
+              <option value="minefighter_icon" data-icon="/36px-Miner_icon.webp">Minefighter</option>
+              <option value="pixel_bone_icon" data-icon="/36px-Bonewright_icon.webp">Bonewright</option>
+              <option value="mining_pickaxe_icon" data-icon="/36px-Miner_icon.webp">Miner</option>
+              <option value="blacksmith_ingot" data-icon="/36px-Blacksmith_icon.webp">Blacksmith</option>
+              <option value="stonemason_icon" data-icon="/30px-Stonemason_icon.webp">Stonemason</option>
+            </optgroup>
+            <optgroup label="Crenopolis">
+              <option value="shield_sword_icon" data-icon="/36px-Watchperson_icon.webp">Watchperson</option>
+              <option value="detective_icon" data-icon="/32px-Detective_icon.webp">Detective</option>
+              <option value="leatherworker_icon" data-icon="/36px-Leatherworker_icon.webp">Leatherworker</option>
+              <option value="merchant_stall_icon" data-icon="/36px-Merchant_icon.webp">Merchant</option>
+            </optgroup>
           </select>
           <button id="reset-exp-btn">Reset Exp Rate</button>
           <button id="clear-ocr-btn">Clear OCR List</button>
