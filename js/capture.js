@@ -36,6 +36,26 @@ async function startCapture() {
       audio: false,
     });
     videoElement.srcObject = stream;
+    videoElement.onloadedmetadata = () => {
+      videoElement.play();
+      const savedCrop = localStorage.getItem("savedCropRegion");
+      if (savedCrop) {
+        cropRegion = JSON.parse(savedCrop);
+        const containerRect = displayContainer.getBoundingClientRect();
+        const videoRect = videoElement.getBoundingClientRect();
+        const videoOffsetX = videoRect.left - containerRect.left;
+        const videoOffsetY = videoRect.top - containerRect.top;
+        cropOverlay.style.display = "block";
+        cropOverlay.style.left = (videoOffsetX + cropRegion.x) + "px";
+        cropOverlay.style.top = (videoOffsetY + cropRegion.y) + "px";
+        cropOverlay.style.width = cropRegion.w + "px";
+        cropOverlay.style.height = cropRegion.h + "px";
+        document.getElementById("reset-crop-btn").style.display = "inline-block";
+        if (!cropAnimationFrameID) {
+          updateCroppedFeed();
+        }
+      }
+    };
     stream.getVideoTracks()[0].addEventListener("ended", () => {
       console.log("Screen sharing stopped");
       videoElement.srcObject = null;
@@ -58,7 +78,6 @@ function startCrop(e) {
   if (!videoElement.srcObject) return;
   const containerRect = displayContainer.getBoundingClientRect();
   const videoRect = videoElement.getBoundingClientRect();
-  // Only allow starting crop if inside video bounds
   if (
     e.clientX < videoRect.left ||
     e.clientX > videoRect.right ||
@@ -121,6 +140,7 @@ function endCrop(e) {
   if (rectWidth > 10 && rectHeight > 10) {
     cropRegion = { x: rectLeft, y: rectTop, w: rectWidth, h: rectHeight };
     document.getElementById("reset-crop-btn").style.display = "inline-block";
+    localStorage.setItem("savedCropRegion", JSON.stringify(cropRegion));
     if (!cropAnimationFrameID) {
       updateCroppedFeed();
     }
@@ -167,6 +187,7 @@ function resetCropSelection() {
   cropRegion = null;
   cropOverlay.style.display = "none";
   document.getElementById("reset-crop-btn").style.display = "none";
+  localStorage.removeItem("savedCropRegion");
   if (cropAnimationFrameID) {
     cancelAnimationFrame(cropAnimationFrameID);
     cropAnimationFrameID = null;
