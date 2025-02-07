@@ -462,18 +462,22 @@
     localStorage.setItem("dailyResetData", JSON.stringify(dailyResetData));
   }
 
-  // Load crop region from localStorage
+  // Load crop region from localStorage and correctly position the crop overlay
   function loadCropRegion() {
     const stored = localStorage.getItem("cropRegion");
     if (stored) {
       try {
         const region = JSON.parse(stored);
-        // If valid, display the crop overlay
+        // Verify a valid region
         if (region && region.x != null && region.y != null && region.w && region.h) {
+          // Calculate the absolute position for the crop overlay based on the current video position
+          const containerRect = displayContainer.getBoundingClientRect();
+          const videoRect = videoElement.getBoundingClientRect();
+          const videoOffsetX = videoRect.left - containerRect.left;
+          const videoOffsetY = videoRect.top - containerRect.top;
           cropOverlay.style.display = 'block';
-          // Best effort restoration of crop overlay position and size
-          cropOverlay.style.left = region.x + 'px';
-          cropOverlay.style.top = region.y + 'px';
+          cropOverlay.style.left = (videoOffsetX + region.x) + 'px';
+          cropOverlay.style.top = (videoOffsetY + region.y) + 'px';
           cropOverlay.style.width = region.w + 'px';
           cropOverlay.style.height = region.h + 'px';
           return region;
@@ -485,7 +489,7 @@
     return null;
   }
 
-  // Save crop region to localStorage
+  // Save crop region to localStorage (stores coordinates relative to the video element)
   function saveCropRegion(region) {
     if (region) {
       localStorage.setItem("cropRegion", JSON.stringify(region));
