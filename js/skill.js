@@ -260,7 +260,7 @@ function renderJournalDataUI(archiveContainer) {
   // Iterate over all skills in the journal data
   for (const skill in journalData) {
     const entries = journalData[skill];
-    if (!entries || entries.length === 0) continue;
+    if (!entries || !Array.isArray(entries) || entries.length === 0) continue;
     hasEntries = true;
     // Create a container for this skill's journal entries
     const skillContainer = document.createElement("div");
@@ -282,7 +282,9 @@ function renderJournalDataUI(archiveContainer) {
         <details class="journal-entry-details">
           <summary>Readings</summary>
           <ul>
-            ${entry.readings ? entry.readings.map(r => `<li>${r.value} (${new Date(r.timestamp).toLocaleTimeString()})</li>`).join('') : '<li>No readings</li>'}
+            ${ entry.readings && Array.isArray(entry.readings) && entry.readings.length 
+                ? entry.readings.map(r => `<li>${r.value} (${new Date(r.timestamp).toLocaleTimeString()})</li>`).join('')
+                : '<li>No readings</li>' }
           </ul>
         </details>
       `;
@@ -291,9 +293,12 @@ function renderJournalDataUI(archiveContainer) {
         e.stopPropagation();
         if (confirm("Are you sure you want to delete this archive entry?")) {
           let jData = loadJournalData();
-          jData[skill] = jData[skill].filter(en => en.date !== entry.date);
-          saveJournalData(jData);
-          renderJournalDataUI(archiveContainer);
+          // Remove the matching entry based on date and skill
+          if (jData[skill] && Array.isArray(jData[skill])) {
+            jData[skill] = jData[skill].filter(en => en.date !== entry.date || JSON.stringify(en.readings) !== JSON.stringify(entry.readings));
+            saveJournalData(jData);
+            renderJournalDataUI(archiveContainer);
+          }
         }
       });
       skillContainer.appendChild(entryDiv);
@@ -302,6 +307,15 @@ function renderJournalDataUI(archiveContainer) {
   }
   if (!hasEntries) {
     archiveContainer.innerHTML = "<p>No archived entries available.</p>";
+  }
+}
+
+// Function to clear all archived journal data with confirmation (clear archive button)
+function clearJournalData(archiveContainer) {
+  if (confirm("Are you sure you want to clear all archive data? This will remove all journal entries.")) {
+    localStorage.removeItem("journalData");
+    archiveContainer.innerHTML = "<p>No archived entries available.</p>";
+    alert("Archive data cleared.");
   }
 }
 
@@ -341,4 +355,4 @@ function autoArchiveAll(expRateDiv, totalExpDiv, ocrResultsContainer) {
   }
 }
 
-export { initSkillEvents, addSkillReading, archiveData, renderJournalDataUI, autoArchiveAll };
+export { initSkillEvents, addSkillReading, archiveData, renderJournalDataUI, autoArchiveAll, clearJournalData };

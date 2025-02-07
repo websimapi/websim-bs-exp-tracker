@@ -1,6 +1,6 @@
 import { init as initCapture, getCroppedCanvas } from "./capture.js";
 import { initOCR } from "./ocr.js";
-import { initSkillEvents, addSkillReading, archiveData, renderJournalDataUI } from "./skill.js";
+import { initSkillEvents, addSkillReading, archiveData, renderJournalDataUI, clearJournalData } from "./skill.js";
 
 window.addEventListener("DOMContentLoaded", () => {
   // Grab necessary DOM elements
@@ -25,6 +25,7 @@ window.addEventListener("DOMContentLoaded", () => {
   const viewJournalBtn = document.getElementById("view-journal-btn");
   const journalModal = document.getElementById("journal-modal");
   const journalEntries = document.getElementById("journal-entries");
+  const clearArchivesBtn = document.getElementById("clear-archives-btn");
   const modalClose = document.querySelector(".modal-close");
 
   // Initialize the capture module (screen capture, crop selection & cropped feed update)
@@ -62,6 +63,11 @@ window.addEventListener("DOMContentLoaded", () => {
   viewJournalBtn.addEventListener("click", () => {
     renderJournalDataUI(journalEntries);
     journalModal.style.display = "block";
+  });
+
+  // Clear Archives button event
+  clearArchivesBtn.addEventListener("click", () => {
+    clearJournalData(journalEntries);
   });
 
   // Modal close event
