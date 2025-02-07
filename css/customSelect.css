@@ -1,4 +1,4 @@
-/* Custom select styling to display icons with text */
+/* Custom select styling to display text only */
 .custom-select-wrapper {
   position: relative;
   display: inline-block;
@@ -32,11 +32,6 @@
   display: flex;
   align-items: center;
 }
-.custom-select-text img {
-  width: 20px;
-  height: auto;
-  margin-right: 8px;
-}
 .custom-options {
   position: absolute;
   top: calc(100% + 2px);
@@ -59,11 +54,6 @@
 }
 .custom-options .custom-option:hover {
   background: #f0f8ff;
-}
-.custom-options .custom-option img {
-  width: 20px;
-  height: auto;
-  margin-right: 8px;
 }
 .custom-option.selected {
   background: #e9ecef;

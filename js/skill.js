@@ -38,12 +38,9 @@ function initSkillEvents({ skillSelect, resetExpBtn, clearOcrBtn, ocrResultsCont
   });
 
   clearOcrBtn.addEventListener("click", () => {
-    if (!currentSkill) {
-      alert("Please select a skill first to clear OCR list!");
-      return;
-    }
-    if (confirm(`Are you sure you want to clear the OCR list for ${currentSkill}? This cannot be undone.`)) {
-      skillData[currentSkill] = [];
+    // Clear OCR list for ALL skills
+    if (confirm("Are you sure you want to clear the OCR list for all skills? This cannot be undone.")) {
+      skillData = {};
       saveSkillData();
       renderSkillDataUI(ocrResultsContainer);
       updateExpRate(expRateDiv);
@@ -171,7 +168,8 @@ function renderSkillDataUI(ocrResultsContainer) {
       const reversedReadings = skillData[skill].slice().reverse();
       reversedReadings.forEach((reading) => {
         const li = document.createElement("li");
-        li.innerHTML = reading.value + " (" + new Date(reading.timestamp).toLocaleTimeString() + ") ";
+        // Added timestamp display including time of day
+        li.innerHTML = reading.value + " (" + new Date(reading.timestamp).toLocaleString() + ") ";
         const deleteBtn = document.createElement("button");
         deleteBtn.textContent = "🗑️";
         deleteBtn.className = "delete-reading";
@@ -227,8 +225,10 @@ function archiveData(expRateDiv, totalExpDiv, ocrResultsContainer) {
   const firstVal = readings[0].value;
   const lastVal = readings[readings.length - 1].value;
   const totalExp = lastVal - firstVal;
-  const dateStr = new Date().toISOString().split('T')[0];
-  const archiveTime = new Date().toLocaleTimeString();
+  // Include time of day in the archive entry
+  const now = new Date();
+  const dateStr = now.toISOString().split('T')[0];
+  const archiveTime = now.toLocaleTimeString();
   let journalData = loadJournalData();
   if (!journalData[currentSkill]) {
     journalData[currentSkill] = [];
@@ -283,7 +283,7 @@ function renderJournalDataUI(archiveContainer) {
           <summary>Readings</summary>
           <ul>
             ${ entry.readings && Array.isArray(entry.readings) && entry.readings.length 
-                ? entry.readings.map(r => `<li>${r.value} (${new Date(r.timestamp).toLocaleTimeString()})</li>`).join('')
+                ? entry.readings.map(r => `<li>${r.value} (${new Date(r.timestamp).toLocaleString()})</li>`).join('')
                 : '<li>No readings</li>' }
           </ul>
         </details>

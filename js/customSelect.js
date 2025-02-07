@@ -11,12 +11,6 @@ function createCustomSelect(selectElement) {
 
   // Set initial selected option from the original select element
   const initialSelected = selectElement.options[selectElement.selectedIndex];
-  const initialIcon = initialSelected.getAttribute("data-icon");
-  if (initialIcon) {
-    const img = document.createElement("img");
-    img.src = initialIcon;
-    selectedDiv.appendChild(img);
-  }
   const span = document.createElement("span");
   span.textContent = initialSelected.textContent;
   selectedDiv.appendChild(span);
@@ -29,12 +23,6 @@ function createCustomSelect(selectElement) {
     const optionDiv = document.createElement("div");
     optionDiv.className = "custom-option";
     optionDiv.setAttribute("data-value", option.value);
-    const icon = option.getAttribute("data-icon");
-    if (icon) {
-      const img = document.createElement("img");
-      img.src = icon;
-      optionDiv.appendChild(img);
-    }
     const textSpan = document.createElement("span");
     textSpan.textContent = option.textContent;
     optionDiv.appendChild(textSpan);
@@ -64,13 +52,8 @@ function createCustomSelect(selectElement) {
       const newValue = optionDiv.getAttribute("data-value");
       selectElement.value = newValue;
 
-      // Update the text and icon on the styled select
+      // Update the text on the styled select
       selectedDiv.innerHTML = "";
-      if (optionDiv.querySelector("img")) {
-        const newImg = document.createElement("img");
-        newImg.src = optionDiv.querySelector("img").src;
-        selectedDiv.appendChild(newImg);
-      }
       const newSpan = document.createElement("span");
       newSpan.textContent = optionDiv.textContent;
       selectedDiv.appendChild(newSpan);
