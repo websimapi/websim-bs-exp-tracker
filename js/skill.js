@@ -364,4 +364,44 @@ function autoArchiveAll(expRateDiv, totalExpDiv, ocrResultsContainer) {
   }
 }
 
-export { initSkillEvents, addSkillReading, archiveData, renderJournalDataUI, autoArchiveAll, clearJournalData };
+// New functions for Export/Import Archive Data
+
+function exportJournalData() {
+  const journalData = loadJournalData();
+  return JSON.stringify(journalData, null, 2);
+}
+
+function importJournalData(importedData, merge = false) {
+  let currentData = loadJournalData();
+  try {
+    const newData = JSON.parse(importedData);
+    if (!merge) {
+      // Override
+      currentData = newData;
+    } else {
+      // Merge: iterate over skills and concatenate arrays
+      for (const skill in newData) {
+        if (!currentData[skill]) {
+          currentData[skill] = newData[skill];
+        } else {
+          // Append each new entry, without duplicate based on date, time, skill
+          newData[skill].forEach(newEntry => {
+            const exists = currentData[skill].find(existingEntry => 
+              existingEntry.date === newEntry.date && existingEntry.time === newEntry.time
+            );
+            if (!exists) {
+              currentData[skill].push(newEntry);
+            }
+          });
+        }
+      }
+    }
+    saveJournalData(currentData);
+    return true;
+  } catch (e) {
+    console.error("Error parsing imported JSON data:", e);
+    return false;
+  }
+}
+
+export { initSkillEvents, addSkillReading, archiveData, renderJournalDataUI, autoArchiveAll, clearJournalData, exportJournalData, importJournalData };

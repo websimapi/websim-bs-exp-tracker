@@ -1,6 +1,6 @@
 import { init as initCapture, getCroppedCanvas } from "./capture.js";
 import { initOCR } from "./ocr.js";
-import { initSkillEvents, addSkillReading, archiveData, renderJournalDataUI, clearJournalData } from "./skill.js";
+import { initSkillEvents, addSkillReading, archiveData, renderJournalDataUI, clearJournalData, exportJournalData, importJournalData } from "./skill.js";
 
 window.addEventListener("DOMContentLoaded", () => {
   // Grab necessary DOM elements
@@ -27,6 +27,11 @@ window.addEventListener("DOMContentLoaded", () => {
   const journalModal = document.getElementById("journal-modal");
   const journalEntries = document.getElementById("journal-entries");
   const modalClose = document.querySelector(".modal-close");
+
+  // Export/Import elements for archive data
+  const exportArchiveBtn = document.getElementById("export-archive-btn");
+  const importArchiveBtn = document.getElementById("import-archive-btn");
+  const importFileInput = document.getElementById("import-file-input");
 
   // Initialize the capture module (screen capture, crop selection & cropped feed update)
   initCapture({
@@ -68,6 +73,45 @@ window.addEventListener("DOMContentLoaded", () => {
   // Clear Archives button event 
   clearArchivesBtn.addEventListener("click", () => {
     clearJournalData(journalEntries);
+  });
+
+  // Export Archive button event
+  exportArchiveBtn.addEventListener("click", () => {
+    const dataStr = exportJournalData();
+    const blob = new Blob([dataStr], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const downloadLink = document.createElement("a");
+    downloadLink.href = url;
+    downloadLink.download = "archive_data.json";
+    downloadLink.click();
+    URL.revokeObjectURL(url);
+  });
+
+  // Import Archive button event
+  importArchiveBtn.addEventListener("click", () => {
+    importFileInput.value = "";
+    importFileInput.click();
+  });
+
+  // File input change event for importing archive data
+  importFileInput.addEventListener("change", () => {
+    const file = importFileInput.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const fileContent = e.target.result;
+      let merge = false;
+      if (!confirm("Press OK to override current archive data, or Cancel to merge with existing data.")) {
+        merge = true;
+      }
+      const success = importJournalData(fileContent, merge);
+      if (success) {
+        alert("Archive data imported successfully.");
+      } else {
+        alert("Failed to import archive data. Please check the file format.");
+      }
+    };
+    reader.readAsText(file);
   });
 
   // Modal close event
