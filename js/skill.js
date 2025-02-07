@@ -227,8 +227,9 @@ function archiveData(expRateDiv, totalExpDiv, ocrResultsContainer) {
   const firstVal = readings[0].value;
   const lastVal = readings[readings.length - 1].value;
   const totalExp = lastVal - firstVal;
-  const dateStr = new Date().toISOString().split('T')[0];
-  const archiveTime = new Date().toLocaleTimeString();
+  const dateObj = new Date();
+  const dateStr = dateObj.toISOString().split('T')[0];
+  const archiveTime = dateObj.toLocaleTimeString();
   let journalData = loadJournalData();
   if (!journalData[currentSkill]) {
     journalData[currentSkill] = [];
@@ -245,7 +246,7 @@ function archiveData(expRateDiv, totalExpDiv, ocrResultsContainer) {
   // Clear active readings for this skill after archiving
   skillData[currentSkill] = [];
   saveSkillData();
-  renderSkillDataUI(ocrResultsContainer);
+  renderSkillDataUI(document.getElementById("ocr-results-container"));
   updateExpRate(expRateDiv);
   updateTotalExp(totalExpDiv);
   alert("Data archived successfully.");
